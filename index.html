@@ -83,7 +83,7 @@
     #strengthLabel{font-size:28px;font-weight:800}
     #scoreText{color:var(--muted)}
     .stats{
-      display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line);
+      display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line);
       background:rgba(0,0,0,.10)
     }
     .stat{
@@ -468,6 +468,10 @@
             <div class="k" data-i18n="length">Length</div>
             <div class="v" id="lengthStat">0 chars</div>
           </div>
+          <div class="stat origin-stat">
+            <div class="k" data-i18n="originLabel">Creation pattern</div>
+            <div class="v" id="originStat">—</div>
+          </div>
         </div>
       </section>
 
@@ -605,6 +609,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const scoreText = document.getElementById("scoreText");
   const guessCount = document.getElementById("guessCount");
   const entropyBits = document.getElementById("entropyBits");
+  const originStat = document.getElementById("originStat");
   const lengthStat = document.getElementById("lengthStat");
   const scenarioList = document.getElementById("scenarioList");
   const patterns = document.getElementById("patterns");
@@ -858,11 +863,11 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   const EXTRA_I18N = {
-    en:{breachIdle:"Breach check runs after you leave the password field.",breachChecking:"Checking the Pwned Passwords corpus…",breachSafe:"Not found in the Pwned Passwords corpus.",breachFound:"Found in known breach data",breachError:"Breach check unavailable right now."},
-    es:{breachIdle:"La verificación de filtraciones se ejecuta al salir del campo de contraseña.",breachChecking:"Consultando Pwned Passwords…",breachSafe:"No aparece en el corpus de Pwned Passwords.",breachFound:"Encontrada en datos de filtraciones conocidas",breachError:"La verificación no está disponible ahora."},
-    pt:{breachIdle:"A verificação de vazamentos é executada ao sair do campo de senha.",breachChecking:"Consultando Pwned Passwords…",breachSafe:"Não encontrada no corpus Pwned Passwords.",breachFound:"Encontrada em dados de vazamentos conhecidos",breachError:"A verificação não está disponível agora."},
-    fr:{breachIdle:"La vérification des fuites s’exécute lorsque vous quittez le champ du mot de passe.",breachChecking:"Vérification dans Pwned Passwords…",breachSafe:"Introuvable dans le corpus Pwned Passwords.",breachFound:"Trouvé dans des données de fuite connues",breachError:"La vérification des fuites est indisponible."},
-    de:{breachIdle:"Die Leak-Prüfung läuft, wenn Sie das Passwortfeld verlassen.",breachChecking:"Prüfe Pwned Passwords…",breachSafe:"Nicht im Pwned-Passwords-Datensatz gefunden.",breachFound:"In bekannten Leak-Daten gefunden",breachError:"Leak-Prüfung ist derzeit nicht verfügbar."}
+    en:{originLabel:"Creation pattern",originHuman:"Human-created patterns",originRandom:"Looks randomly generated",originMixed:"Mixed / uncertain",breachIdle:"Breach check runs after you leave the password field.",breachChecking:"Checking the Pwned Passwords corpus…",breachSafe:"Not found in the Pwned Passwords corpus.",breachFound:"Found in known breach data",breachError:"Breach check unavailable right now."},
+    es:{originLabel:"Patrón de creación",originHuman:"Patrones creados por personas",originRandom:"Parece generada al azar",originMixed:"Mixto / incierto",breachIdle:"La verificación de filtraciones se ejecuta al salir del campo de contraseña.",breachChecking:"Consultando Pwned Passwords…",breachSafe:"No aparece en el corpus de Pwned Passwords.",breachFound:"Encontrada en datos de filtraciones conocidas",breachError:"La verificación no está disponible ahora."},
+    pt:{originLabel:"Padrão de criação",originHuman:"Padrões criados por pessoas",originRandom:"Parece gerada aleatoriamente",originMixed:"Misto / incerto",breachIdle:"A verificação de vazamentos é executada ao sair do campo de senha.",breachChecking:"Consultando Pwned Passwords…",breachSafe:"Não encontrada no corpus Pwned Passwords.",breachFound:"Encontrada em dados de vazamentos conhecidos",breachError:"A verificação não está disponível agora."},
+    fr:{originLabel:"Mode de création",originHuman:"Motifs créés par l’humain",originRandom:"Semble généré aléatoirement",originMixed:"Mixte / incertain",breachIdle:"La vérification des fuites s’exécute lorsque vous quittez le champ du mot de passe.",breachChecking:"Vérification dans Pwned Passwords…",breachSafe:"Introuvable dans le corpus Pwned Passwords.",breachFound:"Trouvé dans des données de fuite connues",breachError:"La vérification des fuites est indisponible."},
+    de:{originLabel:"Erstellungsmuster",originHuman:"Menschlich erzeugte Muster",originRandom:"Wirkt zufällig erzeugt",originMixed:"Gemischt / unsicher",breachIdle:"Die Leak-Prüfung läuft, wenn Sie das Passwortfeld verlassen.",breachChecking:"Prüfe Pwned Passwords…",breachSafe:"Nicht im Pwned-Passwords-Datensatz gefunden.",breachFound:"In bekannten Leak-Daten gefunden",breachError:"Leak-Prüfung ist derzeit nicht verfügbar."}
   };
 
   function detectBrowserLanguage() {
@@ -1259,6 +1264,13 @@ document.addEventListener("DOMContentLoaded", () => {
       .replaceAll("'","&#039;");
   }
 
+  function classifyOrigin(result, value) {
+    const patterned = (result.sequence || []).filter(x => x.pattern !== "bruteforce");
+    if (!patterned.length && value.length >= 12) return tr("originRandom");
+    if (patterned.some(x => ["dictionary","spatial","sequence","repeat","date","regex"].includes(x.pattern))) return tr("originHuman");
+    return tr("originMixed");
+  }
+
   function renderFeedback(result) {
     const warning = result.feedback?.warning || "";
     const suggestions = result.feedback?.suggestions || [];
@@ -1328,6 +1340,7 @@ document.addEventListener("DOMContentLoaded", () => {
       scoreText.textContent = `${tr("score")} —`;
       guessCount.textContent = "—";
       entropyBits.textContent = "—";
+      originStat.textContent = "—";
       patterns.innerHTML = `<div class="note">${tr("enterPattern")}</div>`;
       feedback.innerHTML = "";
       breachState={status:"idle",count:0}; renderBreachStatus();
@@ -1360,6 +1373,7 @@ document.addEventListener("DOMContentLoaded", () => {
       guessCount.textContent = guessParts.plain;
     }
     entropyBits.textContent = `${bits.toFixed(1)} ${tr("bits")}`;
+    originStat.textContent = classifyOrigin(result, value);
 
     renderScenarios(guesses);
     renderPatterns(result);
