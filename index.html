@@ -1127,13 +1127,14 @@ document.addEventListener("DOMContentLoaded", () => {
     password.focus();
   });
 
-  const scenarios = [
-    { key: "throttled", rate: 10 },
-    { key: "permissive", rate: 1e3 },
-    { key: "slow", rate: 1e5 },
-    { key: "gpu", rate: 1e10 },
-    { key: "rig", rate: 5e11 }
-  ];
+  const ATTACK_CONFIG = Object.freeze({
+    throttled: { rate: 10 },
+    permissive: { rate: 1e3 },
+    slow: { rate: 1e5 },
+    gpu: { rate: 1e10 },
+    rig: { rate: 5e11 }
+  });
+  const scenarios = Object.entries(ATTACK_CONFIG).map(([key, config]) => ({key, ...config}));
 
   let lastResult = null;
 
