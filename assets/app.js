@@ -553,7 +553,7 @@ document.addEventListener("DOMContentLoaded", () => {
     else if (breachState.status === "error") breachStatus.textContent = tr("breachError");
     else breachStatus.textContent = tr("breachIdle");
     renderSecurityAdvice();
-    renderScoreWhy(result, value);
+    if (lastResult && password.value) renderScoreWhy(lastResult, password.value);
   }
 
   async function checkPwnedPassword() {
@@ -632,6 +632,7 @@ document.addEventListener("DOMContentLoaded", () => {
     renderPassphrase(result, value);
     renderPatterns(result);
     renderFeedback(result);
+    renderScoreWhy(result, value);
     renderSecurityAdvice();
     applyBreachOverride();
   }
