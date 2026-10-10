@@ -128,6 +128,9 @@
     .pill{display:inline-flex;width:max-content;padding:4px 8px;border-radius:999px;background:#172c47;color:#bcd6f5;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.04em}
     .token{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
     .entropy{color:var(--muted);font-size:13px}
+    .breach-status{margin-top:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:13px;color:var(--muted)}
+    .breach-status.bad{border-color:rgba(255,94,102,.55);background:rgba(255,94,102,.07);color:#ffd1d4}
+    .breach-status.good{border-color:rgba(46,208,127,.45);background:rgba(46,208,127,.06);color:#c9f5dd}
     .feedback{
       margin-top:14px;padding:14px 16px;border-left:3px solid var(--warn);
       background:rgba(246,185,67,.06);border-radius:8px
@@ -503,6 +506,7 @@
         <div class="note">Enter a password to see its attack pattern.</div>
       </div>
       <div id="feedback"></div>
+      <div id="breachStatus" class="breach-status" data-i18n="breachIdle">Breach check runs after you leave the password field.</div>
     </section>
     </div>
 
@@ -605,6 +609,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const scenarioList = document.getElementById("scenarioList");
   const patterns = document.getElementById("patterns");
   const feedback = document.getElementById("feedback");
+  const breachStatus = document.getElementById("breachStatus");
   const customRate = document.getElementById("customRate");
   const customRateLabel = document.getElementById("customRateLabel");
   const customTime = document.getElementById("customTime");
@@ -852,6 +857,14 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
+  const EXTRA_I18N = {
+    en:{breachIdle:"Breach check runs after you leave the password field.",breachChecking:"Checking the Pwned Passwords corpus…",breachSafe:"Not found in the Pwned Passwords corpus.",breachFound:"Found in known breach data",breachError:"Breach check unavailable right now."},
+    es:{breachIdle:"La verificación de filtraciones se ejecuta al salir del campo de contraseña.",breachChecking:"Consultando Pwned Passwords…",breachSafe:"No aparece en el corpus de Pwned Passwords.",breachFound:"Encontrada en datos de filtraciones conocidas",breachError:"La verificación no está disponible ahora."},
+    pt:{breachIdle:"A verificação de vazamentos é executada ao sair do campo de senha.",breachChecking:"Consultando Pwned Passwords…",breachSafe:"Não encontrada no corpus Pwned Passwords.",breachFound:"Encontrada em dados de vazamentos conhecidos",breachError:"A verificação não está disponível agora."},
+    fr:{breachIdle:"La vérification des fuites s’exécute lorsque vous quittez le champ du mot de passe.",breachChecking:"Vérification dans Pwned Passwords…",breachSafe:"Introuvable dans le corpus Pwned Passwords.",breachFound:"Trouvé dans des données de fuite connues",breachError:"La vérification des fuites est indisponible."},
+    de:{breachIdle:"Die Leak-Prüfung läuft, wenn Sie das Passwortfeld verlassen.",breachChecking:"Prüfe Pwned Passwords…",breachSafe:"Nicht im Pwned-Passwords-Datensatz gefunden.",breachFound:"In bekannten Leak-Daten gefunden",breachError:"Leak-Prüfung ist derzeit nicht verfügbar."}
+  };
+
   function detectBrowserLanguage() {
     const langs = Array.isArray(navigator.languages) && navigator.languages.length
       ? navigator.languages
@@ -872,7 +885,7 @@ document.addEventListener("DOMContentLoaded", () => {
     ? savedLanguage
     : detectBrowserLanguage();
 
-  function tr(key) { return I18N[currentLanguage][key] ?? key; }
+  function tr(key) { return I18N[currentLanguage][key] ?? EXTRA_I18N[currentLanguage]?.[key] ?? key; }
   function activeLocale() {
     return {en:"en-US",es:"es-ES",pt:"pt-BR",fr:"fr-FR",de:"de-DE"}[currentLanguage] || "en-US";
   }
@@ -891,7 +904,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.querySelectorAll("[data-i18n]").forEach(el => {
       const key = el.dataset.i18n;
-      if (I18N[currentLanguage][key] != null) el.textContent = I18N[currentLanguage][key];
+      const value = I18N[currentLanguage][key] ?? EXTRA_I18N[currentLanguage]?.[key];
+      if (value != null) el.textContent = value;
     });
     document.querySelectorAll("[data-i18n-placeholder]").forEach(el => {
       const key = el.dataset.i18nPlaceholder;
@@ -919,6 +933,7 @@ document.addEventListener("DOMContentLoaded", () => {
       de:"Passwortstärke-Labor • automatische zxcvbn-ts-Aktualisierung aktiviert • Lernwerkzeug • Geben Sie kein echtes Passwort auf einer nicht vertrauenswürdigen Seite ein."
     })[currentLanguage] || "";
     renderScenarios(lastResult ? Math.max(1, Number(lastResult.guesses) || 1) : null);
+    renderBreachStatus();
     evaluate();
   }
 
@@ -1261,6 +1276,46 @@ document.addEventListener("DOMContentLoaded", () => {
     `;
   }
 
+  let breachState = {status:"idle", count:0};
+
+  async function sha1Hex(value) {
+    const data = new TextEncoder().encode(value);
+    const digest = await crypto.subtle.digest("SHA-1", data);
+    return [...new Uint8Array(digest)].map(b => b.toString(16).padStart(2,"0")).join("").toUpperCase();
+  }
+
+  function renderBreachStatus() {
+    breachStatus.className = "breach-status";
+    if (breachState.status === "checking") breachStatus.textContent = tr("breachChecking");
+    else if (breachState.status === "safe") { breachStatus.classList.add("good"); breachStatus.textContent = tr("breachSafe"); }
+    else if (breachState.status === "found") { breachStatus.classList.add("bad"); breachStatus.textContent = `${tr("breachFound")}: ${breachState.count.toLocaleString(activeLocale())}×`; }
+    else if (breachState.status === "error") breachStatus.textContent = tr("breachError");
+    else breachStatus.textContent = tr("breachIdle");
+  }
+
+  async function checkPwnedPassword() {
+    const value = password.value;
+    if (!value) { breachState={status:"idle",count:0}; renderBreachStatus(); return; }
+    breachState={status:"checking",count:0}; renderBreachStatus();
+    try {
+      const hash = await sha1Hex(value);
+      const prefix = hash.slice(0,5), suffix = hash.slice(5);
+      const response = await fetch(`https://api.pwnedpasswords.com/range/${prefix}`, {headers:{"Add-Padding":"true"}, cache:"no-store"});
+      if (!response.ok) throw new Error(`HIBP ${response.status}`);
+      const text = await response.text();
+      let count = 0;
+      for (const line of text.split(/\r?\n/)) {
+        const [candidate, rawCount] = line.split(":");
+        if (candidate === suffix) { count = Number(rawCount) || 0; break; }
+      }
+      breachState = count > 0 ? {status:"found",count} : {status:"safe",count:0};
+    } catch (error) {
+      console.warn("Pwned Passwords check failed", error);
+      breachState={status:"error",count:0};
+    }
+    renderBreachStatus();
+  }
+
   function evaluate() {
     const value = password.value;
     lengthStat.textContent = `${value.length} ${value.length === 1 ? tr("char") : tr("chars")}`;
@@ -1275,6 +1330,7 @@ document.addEventListener("DOMContentLoaded", () => {
       entropyBits.textContent = "—";
       patterns.innerHTML = `<div class="note">${tr("enterPattern")}</div>`;
       feedback.innerHTML = "";
+      breachState={status:"idle",count:0}; renderBreachStatus();
       renderScenarios(null);
       return;
     }
@@ -1310,7 +1366,8 @@ document.addEventListener("DOMContentLoaded", () => {
     renderFeedback(result);
   }
 
-  password.addEventListener("input", evaluate);
+  password.addEventListener("input", () => { breachState={status:"idle",count:0}; renderBreachStatus(); evaluate(); });
+  password.addEventListener("blur", checkPwnedPassword);
   customRate.addEventListener("input", () => renderCustom(lastResult ? Math.max(1, Number(lastResult.guesses) || 1) : null));
 
   toggle.addEventListener("click", () => {
