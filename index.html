@@ -369,6 +369,7 @@
         packages: PKGS
       };
 
+      const urlLang = new URLSearchParams(location.search).get("lang");
       const saved = localStorage.getItem("passwordStrengthLanguage");
       const browserLangs = Array.isArray(navigator.languages) && navigator.languages.length
         ? navigator.languages
@@ -384,7 +385,7 @@
         }
         return "en";
       };
-      const preferred = ["en","es","pt","fr","de"].includes(saved) ? saved : detectSupported();
+      const preferred = ["en","es","pt","fr","de"].includes(urlLang) ? urlLang : (["en","es","pt","fr","de"].includes(saved) ? saved : detectSupported());
       window.passwordEstimator = window.passwordEstimators[preferred];
       window.dispatchEvent(new Event("password-estimator-ready"));
     }
@@ -927,10 +928,11 @@ document.addEventListener("DOMContentLoaded", () => {
     return "en";
   }
 
+  const urlLanguage = new URLSearchParams(location.search).get("lang");
   const savedLanguage = localStorage.getItem("passwordStrengthLanguage");
-  let currentLanguage = ["en","es","pt","fr","de"].includes(savedLanguage)
-    ? savedLanguage
-    : detectBrowserLanguage();
+  let currentLanguage = ["en","es","pt","fr","de"].includes(urlLanguage)
+    ? urlLanguage
+    : (["en","es","pt","fr","de"].includes(savedLanguage) ? savedLanguage : detectBrowserLanguage());
 
   function tr(key) { return I18N[currentLanguage][key] ?? EXTRA_I18N[currentLanguage]?.[key] ?? key; }
   function activeLocale() {
@@ -941,6 +943,9 @@ document.addEventListener("DOMContentLoaded", () => {
   function applyLanguage(lang) {
     currentLanguage = ["en","es","pt","fr","de"].includes(lang) ? lang : "en";
     localStorage.setItem("passwordStrengthLanguage", currentLanguage);
+    const url = new URL(location.href);
+    url.searchParams.set("lang", currentLanguage);
+    history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
     const htmlLang = {en:"en",es:"es",pt:"pt-BR",fr:"fr",de:"de"}[currentLanguage] || "en";
     document.documentElement.lang = htmlLang;
     const modalLangGroup = document.querySelector(".modal-lang");

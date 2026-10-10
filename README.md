@@ -40,3 +40,7 @@ Install the pinned npm dependencies and run `npm run build:offline`. See `offlin
 ## Network policy
 
 The public page intentionally contains no analytics, advertising, tracking pixels, remote fonts, or tag managers. A lightweight test guards against accidental tracker additions.
+
+## Language links
+
+Use `?lang=en`, `?lang=es`, `?lang=pt`, `?lang=fr`, or `?lang=de`. URL language takes precedence over saved preference and browser detection.
