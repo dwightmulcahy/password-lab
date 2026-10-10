@@ -494,7 +494,7 @@ document.addEventListener("DOMContentLoaded", () => {
     `;
   }
 
-  const PASSPHRASE_WORDS = "amber apple atlas bamboo beacon berry biscuit breeze cedar citrus cloud coral delta ember falcon fern forest galaxy garden harbor hazel island ivory jungle lemon lunar mango maple meadow meteor moss ocean olive orchid pebble pepper pine planet plume quartz raven river rocket sage shadow silver solar sparrow stone storm sunset tiger velvet willow winter zebra".split(" ");
+  const PASSPHRASE_WORDS = "amber apple atlas bamboo beacon berry biscuit breeze cedar citrus cloud coral delta ember falcon fern forest galaxy garden harbor hazel island ivory jungle lemon lunar mango maple meadow meteor moss ocean olive orchid pebble pepper pine planet plume quartz raven river rocket sage shadow silver solar sparrow stone storm sunset tiger velvet willow winter zebra acorn alpine anchor apricot arctic badge banana basil basket beach birch blossom bridge bronze brook cactus canyon carrot castle cherry comet copper cotton creek dawn desert eagle earth elm feather field flame flute frost ginger globe grape hill honey iris jade kettle kiwi lagoon lantern leaf lilac lime marble mint moon mountain navy oak orange panda paper peach pearl plum pond poppy rain reef ridge rose ruby sand shell sky snow spruce".split(" ");
 
   function secureIndex(max) {
     const buf = new Uint32Array(1);
@@ -514,8 +514,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function createGeneratedPassword() {
     const passphrase = generatorMode.value === "passphrase";
-    const requested = Number(generatorSize.value) || (passphrase ? 4 : 20);
-    const size = passphrase ? Math.min(8, Math.max(3, requested)) : Math.min(64, Math.max(12, requested));
+    const requested = Number(generatorSize.value) || (passphrase ? 10 : 20);
+    const size = passphrase ? Math.min(12, Math.max(8, requested)) : Math.min(64, Math.max(12, requested));
     password.value = passphrase ? generatePassphrase(size) : generateRandomPassword(size, generatorSymbols.checked);
     password.dispatchEvent(new Event("input", {bubbles:true}));
     password.focus();
@@ -639,7 +639,7 @@ document.addEventListener("DOMContentLoaded", () => {
   password.addEventListener("input", () => { breachState={status:"idle",count:0}; renderBreachStatus(); evaluate(); });
   password.addEventListener("blur", checkPwnedPassword);
   generatorToggle.addEventListener("click", () => { generatorPanel.hidden = !generatorPanel.hidden; });
-  generatorMode.addEventListener("change", () => { generatorSize.value = generatorMode.value === "passphrase" ? 4 : 20; generatorSize.max = generatorMode.value === "passphrase" ? 8 : 64; });
+  generatorMode.addEventListener("change", () => { generatorSize.value = generatorMode.value === "passphrase" ? 10 : 20; generatorSize.min = generatorMode.value === "passphrase" ? 8 : 12; generatorSize.max = generatorMode.value === "passphrase" ? 12 : 64; });
   generatorCreate.addEventListener("click", createGeneratedPassword);
   customRate.addEventListener("input", () => renderCustom(lastResult ? Math.max(1, Number(lastResult.guesses) || 1) : null));
 
