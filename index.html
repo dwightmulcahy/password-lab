@@ -64,6 +64,9 @@
     .hero-card{overflow:hidden}
     .hero-top{padding:18px 18px 12px}
     label{font-weight:700}
+    .generator-panel{margin-top:10px;padding:12px;border:1px solid var(--line);border-radius:12px;background:rgba(0,0,0,.12)}
+    .generator-grid{display:grid;grid-template-columns:1fr 110px auto auto;gap:8px;align-items:center}
+    .generator-grid select,.generator-grid input{background:#07111f;color:white;border:1px solid #29415f;border-radius:8px;padding:9px}
     .password-row{
       display:flex;align-items:center;gap:10px;margin-top:10px;
       background:#07111f;border:1px solid #29415f;border-radius:14px;padding:8px;
@@ -446,6 +449,16 @@
             <input id="password" type="password" autocomplete="off" spellcheck="false" placeholder="Type a password…" data-i18n-placeholder="passwordPlaceholder" />
             <button id="toggle" type="button" data-i18n="show">Show</button>
             <button id="clear" type="button" data-i18n="clear">Clear</button>
+            <button id="generatorToggle" type="button" data-i18n="generate">Generate</button>
+          </div>
+
+          <div id="generatorPanel" class="generator-panel" hidden>
+            <div class="generator-grid">
+              <select id="generatorMode" aria-label="Generator mode"><option value="random" data-i18n="randomPassword">Random password</option><option value="passphrase" data-i18n="passphraseTitle">Passphrase</option></select>
+              <input id="generatorSize" type="number" min="3" max="64" value="20" aria-label="Length or words">
+              <label><input id="generatorSymbols" type="checkbox" checked> <span data-i18n="symbols">Symbols</span></label>
+              <button id="generatorCreate" type="button" data-i18n="create">Create</button>
+            </div>
           </div>
 
           <div class="meter"><div id="meterFill"></div></div>
@@ -607,6 +620,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const password = document.getElementById("password");
   const toggle = document.getElementById("toggle");
   const clearBtn = document.getElementById("clear");
+  const generatorToggle = document.getElementById("generatorToggle");
+  const generatorPanel = document.getElementById("generatorPanel");
+  const generatorMode = document.getElementById("generatorMode");
+  const generatorSize = document.getElementById("generatorSize");
+  const generatorSymbols = document.getElementById("generatorSymbols");
+  const generatorCreate = document.getElementById("generatorCreate");
   const meterFill = document.getElementById("meterFill");
   const strengthLabel = document.getElementById("strengthLabel");
   const scoreText = document.getElementById("scoreText");
@@ -867,11 +886,11 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   const EXTRA_I18N = {
-    en:{passphraseTitle:"Passphrase",passphraseWords:"words",passphraseRandom:"Multiple independent-looking words; length is doing useful work.",passphraseCommon:"Contains recognizable/common phrase structure; do not assume word count equals random entropy.",guessOrderHelp:"Optimized attacker guess order, not raw combinations.",originLabel:"Creation pattern",originHuman:"Human-created patterns",originRandom:"Looks randomly generated",originMixed:"Mixed / uncertain",breachIdle:"Breach check runs after you leave the password field.",breachChecking:"Checking the Pwned Passwords corpus…",breachSafe:"Not found in the Pwned Passwords corpus.",breachFound:"Found in known breach data",breachError:"Breach check unavailable right now."},
-    es:{passphraseTitle:"Frase de contraseña",passphraseWords:"palabras",passphraseRandom:"Varias palabras aparentemente independientes; la longitud aporta seguridad.",passphraseCommon:"Contiene una estructura de frase reconocible/común; no asumas que el número de palabras equivale a entropía aleatoria.",guessOrderHelp:"Orden de intentos optimizado del atacante, no combinaciones brutas.",originLabel:"Patrón de creación",originHuman:"Patrones creados por personas",originRandom:"Parece generada al azar",originMixed:"Mixto / incierto",breachIdle:"La verificación de filtraciones se ejecuta al salir del campo de contraseña.",breachChecking:"Consultando Pwned Passwords…",breachSafe:"No aparece en el corpus de Pwned Passwords.",breachFound:"Encontrada en datos de filtraciones conocidas",breachError:"La verificación no está disponible ahora."},
-    pt:{passphraseTitle:"Frase-senha",passphraseWords:"palavras",passphraseRandom:"Várias palavras aparentemente independentes; o comprimento ajuda de verdade.",passphraseCommon:"Contém estrutura de frase reconhecível/comum; não presuma que a contagem de palavras equivale a entropia aleatória.",guessOrderHelp:"Ordem de tentativas otimizada do invasor, não combinações brutas.",originLabel:"Padrão de criação",originHuman:"Padrões criados por pessoas",originRandom:"Parece gerada aleatoriamente",originMixed:"Misto / incerto",breachIdle:"A verificação de vazamentos é executada ao sair do campo de senha.",breachChecking:"Consultando Pwned Passwords…",breachSafe:"Não encontrada no corpus Pwned Passwords.",breachFound:"Encontrada em dados de vazamentos conhecidos",breachError:"A verificação não está disponível agora."},
-    fr:{passphraseTitle:"Phrase de passe",passphraseWords:"mots",passphraseRandom:"Plusieurs mots apparemment indépendants ; la longueur apporte une vraie résistance.",passphraseCommon:"Structure de phrase reconnaissable/courante ; ne supposez pas que le nombre de mots équivaut à de l’entropie aléatoire.",guessOrderHelp:"Ordre d’essais optimisé de l’attaquant, pas les combinaisons brutes.",originLabel:"Mode de création",originHuman:"Motifs créés par l’humain",originRandom:"Semble généré aléatoirement",originMixed:"Mixte / incertain",breachIdle:"La vérification des fuites s’exécute lorsque vous quittez le champ du mot de passe.",breachChecking:"Vérification dans Pwned Passwords…",breachSafe:"Introuvable dans le corpus Pwned Passwords.",breachFound:"Trouvé dans des données de fuite connues",breachError:"La vérification des fuites est indisponible."},
-    de:{passphraseTitle:"Passphrase",passphraseWords:"Wörter",passphraseRandom:"Mehrere scheinbar unabhängige Wörter; die Länge hilft wirklich.",passphraseCommon:"Erkennbare/übliche Phrasenstruktur; Wortzahl ist nicht gleich Zufallsentropie.",guessOrderHelp:"Optimierte Angreifer-Reihenfolge, nicht rohe Kombinationen.",originLabel:"Erstellungsmuster",originHuman:"Menschlich erzeugte Muster",originRandom:"Wirkt zufällig erzeugt",originMixed:"Gemischt / unsicher",breachIdle:"Die Leak-Prüfung läuft, wenn Sie das Passwortfeld verlassen.",breachChecking:"Prüfe Pwned Passwords…",breachSafe:"Nicht im Pwned-Passwords-Datensatz gefunden.",breachFound:"In bekannten Leak-Daten gefunden",breachError:"Leak-Prüfung ist derzeit nicht verfügbar."}
+    en:{generate:"Generate",randomPassword:"Random password",symbols:"Symbols",create:"Create",passphraseTitle:"Passphrase",passphraseWords:"words",passphraseRandom:"Multiple independent-looking words; length is doing useful work.",passphraseCommon:"Contains recognizable/common phrase structure; do not assume word count equals random entropy.",guessOrderHelp:"Optimized attacker guess order, not raw combinations.",originLabel:"Creation pattern",originHuman:"Human-created patterns",originRandom:"Looks randomly generated",originMixed:"Mixed / uncertain",breachIdle:"Breach check runs after you leave the password field.",breachChecking:"Checking the Pwned Passwords corpus…",breachSafe:"Not found in the Pwned Passwords corpus.",breachFound:"Found in known breach data",breachError:"Breach check unavailable right now."},
+    es:{generate:"Generar",randomPassword:"Contraseña aleatoria",symbols:"Símbolos",create:"Crear",passphraseTitle:"Frase de contraseña",passphraseWords:"palabras",passphraseRandom:"Varias palabras aparentemente independientes; la longitud aporta seguridad.",passphraseCommon:"Contiene una estructura de frase reconocible/común; no asumas que el número de palabras equivale a entropía aleatoria.",guessOrderHelp:"Orden de intentos optimizado del atacante, no combinaciones brutas.",originLabel:"Patrón de creación",originHuman:"Patrones creados por personas",originRandom:"Parece generada al azar",originMixed:"Mixto / incierto",breachIdle:"La verificación de filtraciones se ejecuta al salir del campo de contraseña.",breachChecking:"Consultando Pwned Passwords…",breachSafe:"No aparece en el corpus de Pwned Passwords.",breachFound:"Encontrada en datos de filtraciones conocidas",breachError:"La verificación no está disponible ahora."},
+    pt:{generate:"Gerar",randomPassword:"Senha aleatória",symbols:"Símbolos",create:"Criar",passphraseTitle:"Frase-senha",passphraseWords:"palavras",passphraseRandom:"Várias palavras aparentemente independentes; o comprimento ajuda de verdade.",passphraseCommon:"Contém estrutura de frase reconhecível/comum; não presuma que a contagem de palavras equivale a entropia aleatória.",guessOrderHelp:"Ordem de tentativas otimizada do invasor, não combinações brutas.",originLabel:"Padrão de criação",originHuman:"Padrões criados por pessoas",originRandom:"Parece gerada aleatoriamente",originMixed:"Misto / incerto",breachIdle:"A verificação de vazamentos é executada ao sair do campo de senha.",breachChecking:"Consultando Pwned Passwords…",breachSafe:"Não encontrada no corpus Pwned Passwords.",breachFound:"Encontrada em dados de vazamentos conhecidos",breachError:"A verificação não está disponível agora."},
+    fr:{generate:"Générer",randomPassword:"Mot de passe aléatoire",symbols:"Symboles",create:"Créer",passphraseTitle:"Phrase de passe",passphraseWords:"mots",passphraseRandom:"Plusieurs mots apparemment indépendants ; la longueur apporte une vraie résistance.",passphraseCommon:"Structure de phrase reconnaissable/courante ; ne supposez pas que le nombre de mots équivaut à de l’entropie aléatoire.",guessOrderHelp:"Ordre d’essais optimisé de l’attaquant, pas les combinaisons brutes.",originLabel:"Mode de création",originHuman:"Motifs créés par l’humain",originRandom:"Semble généré aléatoirement",originMixed:"Mixte / incertain",breachIdle:"La vérification des fuites s’exécute lorsque vous quittez le champ du mot de passe.",breachChecking:"Vérification dans Pwned Passwords…",breachSafe:"Introuvable dans le corpus Pwned Passwords.",breachFound:"Trouvé dans des données de fuite connues",breachError:"La vérification des fuites est indisponible."},
+    de:{generate:"Erzeugen",randomPassword:"Zufälliges Passwort",symbols:"Symbole",create:"Erstellen",passphraseTitle:"Passphrase",passphraseWords:"Wörter",passphraseRandom:"Mehrere scheinbar unabhängige Wörter; die Länge hilft wirklich.",passphraseCommon:"Erkennbare/übliche Phrasenstruktur; Wortzahl ist nicht gleich Zufallsentropie.",guessOrderHelp:"Optimierte Angreifer-Reihenfolge, nicht rohe Kombinationen.",originLabel:"Erstellungsmuster",originHuman:"Menschlich erzeugte Muster",originRandom:"Wirkt zufällig erzeugt",originMixed:"Gemischt / unsicher",breachIdle:"Die Leak-Prüfung läuft, wenn Sie das Passwortfeld verlassen.",breachChecking:"Prüfe Pwned Passwords…",breachSafe:"Nicht im Pwned-Passwords-Datensatz gefunden.",breachFound:"In bekannten Leak-Daten gefunden",breachError:"Leak-Prüfung ist derzeit nicht verfügbar."}
   };
 
   function detectBrowserLanguage() {
@@ -1300,6 +1319,33 @@ document.addEventListener("DOMContentLoaded", () => {
     `;
   }
 
+  const PASSPHRASE_WORDS = "amber apple atlas bamboo beacon berry biscuit breeze cedar citrus cloud coral delta ember falcon fern forest galaxy garden harbor hazel island ivory jungle lemon lunar mango maple meadow meteor moss ocean olive orchid pebble pepper pine planet plume quartz raven river rocket sage shadow silver solar sparrow stone storm sunset tiger velvet willow winter zebra".split(" ");
+
+  function secureIndex(max) {
+    const buf = new Uint32Array(1);
+    const limit = Math.floor(0x100000000 / max) * max;
+    do { crypto.getRandomValues(buf); } while (buf[0] >= limit);
+    return buf[0] % max;
+  }
+
+  function generateRandomPassword(length, useSymbols) {
+    const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789" + (useSymbols ? "!@#$%^&*()-_=+[]{};:,.?" : "");
+    return Array.from({length}, () => alphabet[secureIndex(alphabet.length)]).join("");
+  }
+
+  function generatePassphrase(words) {
+    return Array.from({length:words}, () => PASSPHRASE_WORDS[secureIndex(PASSPHRASE_WORDS.length)]).join("-");
+  }
+
+  function createGeneratedPassword() {
+    const passphrase = generatorMode.value === "passphrase";
+    const requested = Number(generatorSize.value) || (passphrase ? 4 : 20);
+    const size = passphrase ? Math.min(8, Math.max(3, requested)) : Math.min(64, Math.max(12, requested));
+    password.value = passphrase ? generatePassphrase(size) : generateRandomPassword(size, generatorSymbols.checked);
+    password.dispatchEvent(new Event("input", {bubbles:true}));
+    password.focus();
+  }
+
   let breachState = {status:"idle", count:0};
 
   async function sha1Hex(value) {
@@ -1396,6 +1442,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   password.addEventListener("input", () => { breachState={status:"idle",count:0}; renderBreachStatus(); evaluate(); });
   password.addEventListener("blur", checkPwnedPassword);
+  generatorToggle.addEventListener("click", () => { generatorPanel.hidden = !generatorPanel.hidden; });
+  generatorMode.addEventListener("change", () => { generatorSize.value = generatorMode.value === "passphrase" ? 4 : 20; generatorSize.max = generatorMode.value === "passphrase" ? 8 : 64; });
+  generatorCreate.addEventListener("click", createGeneratedPassword);
   customRate.addEventListener("input", () => renderCustom(lastResult ? Math.max(1, Number(lastResult.guesses) || 1) : null));
 
   toggle.addEventListener("click", () => {
