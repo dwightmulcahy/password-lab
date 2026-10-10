@@ -9,6 +9,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const generatorSize = document.getElementById("generatorSize");
   const generatorSymbols = document.getElementById("generatorSymbols");
   const generatorCreate = document.getElementById("generatorCreate");
+  const generatorCopy = document.getElementById("generatorCopy");
   const meterFill = document.getElementById("meterFill");
   const strengthLabel = document.getElementById("strengthLabel");
   const scoreText = document.getElementById("scoreText");
@@ -642,6 +643,13 @@ document.addEventListener("DOMContentLoaded", () => {
   generatorToggle.addEventListener("click", () => { generatorPanel.hidden = !generatorPanel.hidden; });
   generatorMode.addEventListener("change", () => { generatorSize.value = generatorMode.value === "passphrase" ? 10 : 20; generatorSize.min = generatorMode.value === "passphrase" ? 8 : 12; generatorSize.max = generatorMode.value === "passphrase" ? 12 : 64; });
   generatorCreate.addEventListener("click", createGeneratedPassword);
+  generatorCopy.addEventListener("click", async () => {
+    if (!password.value) createGeneratedPassword();
+    await navigator.clipboard.writeText(password.value);
+    const original = generatorCopy.textContent;
+    generatorCopy.textContent = tr("copied");
+    setTimeout(() => { generatorCopy.textContent = tr("copy") || original; }, 1200);
+  });
   customRate.addEventListener("input", () => renderCustom(lastResult ? Math.max(1, Number(lastResult.guesses) || 1) : null));
 
   toggle.addEventListener("click", () => {
