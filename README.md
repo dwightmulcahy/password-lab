@@ -17,7 +17,13 @@ Open `index.html` directly in a modern browser, or serve the directory with any 
 
 ## Docker
 
-Docker support is added in the next commit. The container serves the site on port 8080.
+Build and run:
+
+```bash
+docker compose up -d --build
+```
+
+Then open `http://localhost:8080`. The health endpoint is `http://localhost:8080/healthz`.
 
 ## Privacy
 

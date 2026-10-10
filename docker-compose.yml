@@ -1,0 +1,7 @@
+services:
+  password-strength-lab:
+    build: .
+    container_name: password-strength-lab
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
