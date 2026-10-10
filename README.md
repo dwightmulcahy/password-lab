@@ -36,3 +36,7 @@ The repository intentionally has no Git tags or automatic release versioning.
 ## Offline build
 
 Install the pinned npm dependencies and run `npm run build:offline`. See `offline/README.md`.
+
+## Network policy
+
+The public page intentionally contains no analytics, advertising, tracking pixels, remote fonts, or tag managers. A lightweight test guards against accidental tracker additions.
