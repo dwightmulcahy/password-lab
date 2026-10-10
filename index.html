@@ -99,6 +99,7 @@
       font-size:17px;font-weight:800;line-height:1.15;word-break:normal;overflow-wrap:anywhere;
       text-align:left
     }
+    .stat-help{font-size:10px;color:var(--muted);line-height:1.25}
     .guess-value{
       display:inline-flex;align-items:baseline;gap:.18em;white-space:nowrap;
       font-variant-numeric:tabular-nums
@@ -459,6 +460,7 @@
           <div class="stat">
             <div class="k"><span data-i18n="estimatedGuesses">Estimated guesses</span> <span class="tip" tabindex="0">?<span class="tiptext" data-i18n="tipEstimatedGuesses">Guess-based: the estimator first calculates how many guesses an attacker may need. Crack time is then derived separately from the attack rate.</span></span></div>
             <div class="v" id="guessCount">—</div>
+            <div class="stat-help" data-i18n="guessOrderHelp">Optimized attacker guess order, not raw combinations.</div>
           </div>
           <div class="stat">
             <div class="k" data-i18n="guessEntropy">Guess entropy</div>
@@ -863,11 +865,11 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   const EXTRA_I18N = {
-    en:{originLabel:"Creation pattern",originHuman:"Human-created patterns",originRandom:"Looks randomly generated",originMixed:"Mixed / uncertain",breachIdle:"Breach check runs after you leave the password field.",breachChecking:"Checking the Pwned Passwords corpus…",breachSafe:"Not found in the Pwned Passwords corpus.",breachFound:"Found in known breach data",breachError:"Breach check unavailable right now."},
-    es:{originLabel:"Patrón de creación",originHuman:"Patrones creados por personas",originRandom:"Parece generada al azar",originMixed:"Mixto / incierto",breachIdle:"La verificación de filtraciones se ejecuta al salir del campo de contraseña.",breachChecking:"Consultando Pwned Passwords…",breachSafe:"No aparece en el corpus de Pwned Passwords.",breachFound:"Encontrada en datos de filtraciones conocidas",breachError:"La verificación no está disponible ahora."},
-    pt:{originLabel:"Padrão de criação",originHuman:"Padrões criados por pessoas",originRandom:"Parece gerada aleatoriamente",originMixed:"Misto / incerto",breachIdle:"A verificação de vazamentos é executada ao sair do campo de senha.",breachChecking:"Consultando Pwned Passwords…",breachSafe:"Não encontrada no corpus Pwned Passwords.",breachFound:"Encontrada em dados de vazamentos conhecidos",breachError:"A verificação não está disponível agora."},
-    fr:{originLabel:"Mode de création",originHuman:"Motifs créés par l’humain",originRandom:"Semble généré aléatoirement",originMixed:"Mixte / incertain",breachIdle:"La vérification des fuites s’exécute lorsque vous quittez le champ du mot de passe.",breachChecking:"Vérification dans Pwned Passwords…",breachSafe:"Introuvable dans le corpus Pwned Passwords.",breachFound:"Trouvé dans des données de fuite connues",breachError:"La vérification des fuites est indisponible."},
-    de:{originLabel:"Erstellungsmuster",originHuman:"Menschlich erzeugte Muster",originRandom:"Wirkt zufällig erzeugt",originMixed:"Gemischt / unsicher",breachIdle:"Die Leak-Prüfung läuft, wenn Sie das Passwortfeld verlassen.",breachChecking:"Prüfe Pwned Passwords…",breachSafe:"Nicht im Pwned-Passwords-Datensatz gefunden.",breachFound:"In bekannten Leak-Daten gefunden",breachError:"Leak-Prüfung ist derzeit nicht verfügbar."}
+    en:{guessOrderHelp:"Optimized attacker guess order, not raw combinations.",originLabel:"Creation pattern",originHuman:"Human-created patterns",originRandom:"Looks randomly generated",originMixed:"Mixed / uncertain",breachIdle:"Breach check runs after you leave the password field.",breachChecking:"Checking the Pwned Passwords corpus…",breachSafe:"Not found in the Pwned Passwords corpus.",breachFound:"Found in known breach data",breachError:"Breach check unavailable right now."},
+    es:{guessOrderHelp:"Orden de intentos optimizado del atacante, no combinaciones brutas.",originLabel:"Patrón de creación",originHuman:"Patrones creados por personas",originRandom:"Parece generada al azar",originMixed:"Mixto / incierto",breachIdle:"La verificación de filtraciones se ejecuta al salir del campo de contraseña.",breachChecking:"Consultando Pwned Passwords…",breachSafe:"No aparece en el corpus de Pwned Passwords.",breachFound:"Encontrada en datos de filtraciones conocidas",breachError:"La verificación no está disponible ahora."},
+    pt:{guessOrderHelp:"Ordem de tentativas otimizada do invasor, não combinações brutas.",originLabel:"Padrão de criação",originHuman:"Padrões criados por pessoas",originRandom:"Parece gerada aleatoriamente",originMixed:"Misto / incerto",breachIdle:"A verificação de vazamentos é executada ao sair do campo de senha.",breachChecking:"Consultando Pwned Passwords…",breachSafe:"Não encontrada no corpus Pwned Passwords.",breachFound:"Encontrada em dados de vazamentos conhecidos",breachError:"A verificação não está disponível agora."},
+    fr:{guessOrderHelp:"Ordre d’essais optimisé de l’attaquant, pas les combinaisons brutes.",originLabel:"Mode de création",originHuman:"Motifs créés par l’humain",originRandom:"Semble généré aléatoirement",originMixed:"Mixte / incertain",breachIdle:"La vérification des fuites s’exécute lorsque vous quittez le champ du mot de passe.",breachChecking:"Vérification dans Pwned Passwords…",breachSafe:"Introuvable dans le corpus Pwned Passwords.",breachFound:"Trouvé dans des données de fuite connues",breachError:"La vérification des fuites est indisponible."},
+    de:{guessOrderHelp:"Optimierte Angreifer-Reihenfolge, nicht rohe Kombinationen.",originLabel:"Erstellungsmuster",originHuman:"Menschlich erzeugte Muster",originRandom:"Wirkt zufällig erzeugt",originMixed:"Gemischt / unsicher",breachIdle:"Die Leak-Prüfung läuft, wenn Sie das Passwortfeld verlassen.",breachChecking:"Prüfe Pwned Passwords…",breachSafe:"Nicht im Pwned-Passwords-Datensatz gefunden.",breachFound:"In bekannten Leak-Daten gefunden",breachError:"Leak-Prüfung ist derzeit nicht verfügbar."}
   };
 
   function detectBrowserLanguage() {
