@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check JavaScript syntax
+        run: |
+          node --check assets/app.js
+          node --check assets/i18n.js
+          node --check assets/attack-rates.js
+          node --check assets/zxcvbn-loader.js
+      - name: Run privacy tests
+        run: python3 tests/test_no_trackers.py
+      - name: Install build dependencies
+        run: npm install --no-audit --no-fund
+      - name: Build offline edition
+        run: npm run build:offline
+      - name: Build Docker image
+        run: docker build -t password-strength-lab:ci .
