@@ -32,3 +32,7 @@ Password analysis runs in the browser. Review the Network Activity section and p
 ## Development
 
 The repository intentionally has no Git tags or automatic release versioning.
+
+## Offline build
+
+Install the pinned npm dependencies and run `npm run build:offline`. See `offline/README.md`.
