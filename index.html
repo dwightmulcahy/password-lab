@@ -82,6 +82,7 @@
       border-radius:10px;padding:10px 13px;font-weight:700
     }
     button:hover{background:#1a3454}
+    :focus-visible{outline:3px solid #79b8ff;outline-offset:2px}
     .meter{height:13px;background:#07111f;border-radius:999px;overflow:hidden;margin:18px 0 10px;border:1px solid #203550}
     #meterFill{height:100%;width:0%;transition:width .22s ease,background .22s ease}
     .strength-line{display:flex;justify-content:space-between;gap:16px;align-items:baseline}
@@ -399,7 +400,7 @@
 </head>
 <body>
 
-  <div id="privacyModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="privacyTitle" hidden>
+  <div id="privacyModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="privacyTitle" aria-describedby="privacyBody privacyFine" hidden>
     <div class="modal">
       <div class="modal-icon">✓</div>
       <h2 id="privacyTitle" data-i18n="privacyTitle">Your password is not submitted by this page</h2>
@@ -427,9 +428,9 @@
     <h1 data-i18n="title">Password Strength Lab</h1>
     <p class="lede" id="lede" data-i18n="lede">A modernized password-strength meter that estimates how many guesses an attacker may need, recognizes human password patterns, and shows why “time to crack” changes dramatically depending on the attack scenario.</p>
     <div class="topbar">
-      <nav class="tabs" aria-label="Page sections">
-        <button class="tab-btn active" type="button" data-tab="test" data-i18n="tabTest">Password Test</button>
-        <button class="tab-btn" type="button" data-tab="faq" data-i18n="tabFaq">FAQ</button>
+      <nav class="tabs" role="tablist" aria-label="Page sections">
+        <button class="tab-btn active" role="tab" aria-controls="tab-test" type="button" data-tab="test" data-i18n="tabTest">Password Test</button>
+        <button class="tab-btn" role="tab" aria-controls="tab-faq" type="button" data-tab="faq" data-i18n="tabFaq">FAQ</button>
       </nav>
       <div class="top-actions">
         <div class="language-toggle" role="group" aria-label="Language">
@@ -453,7 +454,7 @@
   </header>
 
   <main class="wrap">
-    <div id="tab-test" class="tab-panel">
+    <div id="tab-test" role="tabpanel" class="tab-panel">
     <div class="grid">
       <section class="card hero-card">
         <div class="hero-top">
@@ -477,8 +478,8 @@
           <div class="meter"><div id="meterFill"></div></div>
 
           <div class="strength-line">
-            <div id="strengthLabel" data-i18n="noPassword">No password</div>
-            <div id="scoreText">Score —</div>
+            <div id="strengthLabel" aria-live="polite" data-i18n="noPassword">No password</div>
+            <div id="scoreText" aria-live="polite">Score —</div>
           </div>
         </div>
 
@@ -508,7 +509,7 @@
         <p class="section-sub" data-i18n="scenarioSub">Same estimated guess count, different attacker speeds. Rates below are illustrative and adjustable.</p>
         <div class="note" id="attackUpdated"></div>
 
-        <div id="scenarioList"></div>
+        <div id="scenarioList" aria-live="polite"></div>
 
         <div class="custom-rate">
           <div>
@@ -536,11 +537,11 @@
       <h2 class="section-title"><span data-i18n="detectedTitle">What the estimator detected</span> <span class="tip" tabindex="0">?<span class="tiptext" data-i18n="tipDetected">Pattern-aware: the estimator recognizes common passwords, words, names, repeats, sequences, dates, keyboard walks and l33t substitutions instead of treating every character as random.</span></span></h2>
       <p class="section-sub" data-i18n="detectedSub">These are the pieces zxcvbn-ts believes an attacker would exploit before falling back to brute force.</p>
       <div id="passphraseInfo" class="breach-status" hidden></div>
-      <div id="patterns" class="patterns">
+      <div id="patterns" class="patterns" aria-live="polite">
         <div class="note">Enter a password to see its attack pattern.</div>
       </div>
       <div id="feedback"></div>
-      <div id="breachStatus" class="breach-status" data-i18n="breachIdle">Breach check runs after you leave the password field.</div>
+      <div id="breachStatus" role="status" aria-live="polite" class="breach-status" data-i18n="breachIdle">Breach check runs after you leave the password field.</div>
       <div id="securityAdvice" class="note" style="margin-top:8px"></div>
       <details id="scoreWhy"><summary data-i18n="whyScore">Why this score?</summary><div id="scoreWhyBody" class="note" style="margin-top:8px"></div></details>
     </section>
@@ -550,7 +551,7 @@
 
     </div><!-- /tab-test -->
 
-    <div id="tab-faq" class="tab-panel" hidden>
+    <div id="tab-faq" role="tabpanel" class="tab-panel" hidden>
       <div class="faq-stack">
     <section class="card pad" style="margin-top:16px">
       <h2 class="section-title" data-i18n="howTitle">How the calculation works</h2>
@@ -1151,7 +1152,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let privacySeen = false;
   try { privacySeen = sessionStorage.getItem("passwordStrengthPrivacySeen") === "1"; } catch (e) {}
-  if (!privacySeen) privacyModal.hidden = false;
+  if (!privacySeen) {
+    privacyModal.hidden = false;
+    setTimeout(() => (modalLanguageSelect || modalLangEn || privacyAccept)?.focus(), 0);
+  }
+
+  privacyModal.addEventListener("keydown", event => {
+    if (event.key !== "Tab") return;
+    const focusable = [...privacyModal.querySelectorAll("button,select,[tabindex]:not([tabindex='-1'])")].filter(el => !el.disabled && el.offsetParent !== null);
+    if (!focusable.length) return;
+    const first = focusable[0], last = focusable[focusable.length - 1];
+    if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+    else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+  });
 
   privacyAccept.addEventListener("click", () => {
     privacyModal.hidden = true;
