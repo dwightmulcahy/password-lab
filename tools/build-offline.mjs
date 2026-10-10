@@ -1,5 +1,5 @@
 import { build } from 'esbuild';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { cp, mkdir, readFile, writeFile } from 'node:fs/promises';
 
 await mkdir('offline', {recursive:true});
 await build({
@@ -12,7 +12,8 @@ await build({
 });
 
 let html = await readFile('index.html', 'utf8');
-html = html.replace(/<script type="module">[\s\S]*?<\/script>/, '<script src="./zxcvbn-offline.js"></script>');
+html = html.replace('<script type="module" src="assets/zxcvbn-loader.js"></script>', '<script src="./zxcvbn-offline.js"></script>');
 html = html.replace('zxcvbn-ts • checking for updates…', 'zxcvbn-ts • offline pinned build');
+await cp('assets', 'offline/assets', {recursive:true, force:true});
 await writeFile('offline/index.html', html);
 console.log('Offline build written to offline/index.html');
