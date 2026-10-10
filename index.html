@@ -219,6 +219,7 @@
     }
     .lang-btn.active{background:#18314f;color:white}
     .top-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    .language-select{display:none;background:#10243b;color:white;border:1px solid var(--line);border-radius:10px;padding:8px 10px}
     .network-trust{margin-top:10px;border:1px solid var(--line);border-radius:12px;padding:9px 12px;background:rgba(0,0,0,.12)}
     .network-trust summary{cursor:pointer;font-weight:800;font-size:12px}
     .network-grid{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;margin-top:8px;font-size:12px;color:var(--muted)}
@@ -415,6 +416,7 @@
           <button id="modalLangFr" class="modal-lang-btn" type="button" data-lang="fr">Français</button>
           <button id="modalLangDe" class="modal-lang-btn" type="button" data-lang="de">Deutsch</button>
         </div>
+        <select id="modalLanguageSelect" class="language-select" aria-label="Language"><option value="en">English</option><option value="es">Español</option><option value="pt">Português</option><option value="fr">Français</option><option value="de">Deutsch</option></select>
         <button id="privacyAccept" class="modal-primary" type="button" data-i18n="continue">Continue</button>
       </div>
     </div>
@@ -436,6 +438,7 @@
           <button class="lang-btn" type="button" data-lang="fr">Français</button>
           <button class="lang-btn" type="button" data-lang="de">Deutsch</button>
         </div>
+        <select id="mobileLanguageSelect" class="language-select" aria-label="Language"><option value="en">English</option><option value="es">Español</option><option value="pt">Português</option><option value="fr">Français</option><option value="de">Deutsch</option></select>
         <div class="lib-badge" id="libBadge" title="Estimator packages used by this page">
           <span id="libBadgeText">zxcvbn-ts • checking for updates…</span>
           <span class="tip" tabindex="0">?<span class="tiptext" id="libBadgeTip">The page checks npm for compatible 4.x releases and falls back to pinned versions if the update check fails.</span></span>
@@ -960,6 +963,8 @@ document.addEventListener("DOMContentLoaded", () => {
     [modalLangEn, modalLangEs, modalLangPt, modalLangFr, modalLangDe].forEach(btn => {
       if (btn) btn.classList.toggle("active", btn.dataset.lang === currentLanguage);
     });
+    if (mobileLanguageSelect) mobileLanguageSelect.value = currentLanguage;
+    if (modalLanguageSelect) modalLanguageSelect.value = currentLanguage;
 
     if (window.passwordEstimators) {
       window.passwordEstimator = window.passwordEstimators[currentLanguage];
@@ -987,6 +992,8 @@ document.addEventListener("DOMContentLoaded", () => {
   [modalLangEn, modalLangEs, modalLangPt, modalLangFr, modalLangDe].forEach(btn => {
     if (btn) btn.addEventListener("click", () => applyLanguage(btn.dataset.lang));
   });
+  mobileLanguageSelect?.addEventListener("change", () => applyLanguage(mobileLanguageSelect.value));
+  modalLanguageSelect?.addEventListener("change", () => applyLanguage(modalLanguageSelect.value));
 
   function renderNetworkTrust() {
     networkGrid.innerHTML = `<strong>${tr("networkLocal")}</strong><span>${tr("networkLocalValue")}</span><strong>${tr("networkTransmit")}</strong><span>${tr("networkTransmitValue")}</span><strong>${tr("networkBreach")}</strong><span>${tr("networkBreachValue")}</span><strong>${tr("networkDeps")}</strong><span>${window.OFFLINE_BUILD ? "offline bundle" : tr("networkDepsValue")}</span>`;
@@ -1114,6 +1121,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const modalLangPt = document.getElementById("modalLangPt");
   const modalLangFr = document.getElementById("modalLangFr");
   const modalLangDe = document.getElementById("modalLangDe");
+  const mobileLanguageSelect = document.getElementById("mobileLanguageSelect");
+  const modalLanguageSelect = document.getElementById("modalLanguageSelect");
   const tabButtons = [...document.querySelectorAll(".tab-btn")];
   const tabPanels = {
     test: document.getElementById("tab-test"),
@@ -1535,5 +1544,12 @@ document.addEventListener("DOMContentLoaded", () => {
   .top-actions{align-items:flex-start}
   .language-toggle{max-width:100%}
   .lang-btn{padding:6px 8px}
+}
+</style>
+
+<style>
+@media(max-width:700px){
+  .language-toggle,.modal-lang{display:none}
+  .language-select{display:block}
 }
 </style>
