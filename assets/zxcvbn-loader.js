@@ -78,6 +78,11 @@
       }
     }
 
+    function safeStorageGet(key) {
+      try { return window.localStorage?.getItem(key) ?? null; }
+      catch (error) { console.warn("Storage unavailable to estimator loader; continuing without saved preference.", error); return null; }
+    }
+
     async function loadEstimator() {
       const resolved = await resolveVersions();
       const v = resolved.versions;
@@ -123,7 +128,7 @@
       };
 
       const urlLang = new URLSearchParams(location.search).get("lang");
-      const saved = localStorage.getItem("passwordStrengthLanguage");
+      const saved = safeStorageGet("passwordStrengthLanguage");
       const browserLangs = Array.isArray(navigator.languages) && navigator.languages.length
         ? navigator.languages
         : [navigator.language || "en"];

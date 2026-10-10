@@ -32,6 +32,20 @@ document.addEventListener("DOMContentLoaded", () => {
   const libBadgeTip = document.getElementById("libBadgeTip");
   const langButtons = [...document.querySelectorAll(".lang-btn")];
   const networkGrid = document.getElementById("networkGrid");
+  const privacyModal = document.getElementById("privacyModal");
+  const privacyAccept = document.getElementById("privacyAccept");
+  const modalLangEn = document.getElementById("modalLangEn");
+  const modalLangEs = document.getElementById("modalLangEs");
+  const modalLangPt = document.getElementById("modalLangPt");
+  const modalLangFr = document.getElementById("modalLangFr");
+  const modalLangDe = document.getElementById("modalLangDe");
+  const mobileLanguageSelect = document.getElementById("mobileLanguageSelect");
+  const modalLanguageSelect = document.getElementById("modalLanguageSelect");
+  const tabButtons = [...document.querySelectorAll(".tab-btn")];
+  const tabPanels = {
+    test: document.getElementById("tab-test"),
+    faq: document.getElementById("tab-faq")
+  };
 
   const I18N = window.I18N;
 
@@ -52,8 +66,29 @@ document.addEventListener("DOMContentLoaded", () => {
     return "en";
   }
 
-  const urlLanguage = new URLSearchParams(location.search).get("lang");
-  const savedLanguage = localStorage.getItem("passwordStrengthLanguage");
+  function safeStorageGet(key) {
+    try { return window.localStorage?.getItem(key) ?? null; }
+    catch (error) { console.warn("Storage unavailable; continuing without saved preferences.", error); return null; }
+  }
+
+  function safeStorageSet(key, value) {
+    try { window.localStorage?.setItem(key, value); return true; }
+    catch (error) { console.warn("Storage unavailable; preference will not persist.", error); return false; }
+  }
+
+  function safeReplaceUrlLanguage(lang) {
+    try {
+      const url = new URL(location.href);
+      url.searchParams.set("lang", lang);
+      history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+    } catch (error) {
+      console.warn("Unable to update the language URL; continuing normally.", error);
+    }
+  }
+
+  let urlLanguage = null;
+  try { urlLanguage = new URLSearchParams(location.search).get("lang"); } catch (error) {}
+  const savedLanguage = safeStorageGet("passwordStrengthLanguage");
   let currentLanguage = ["en","es","pt","fr","de"].includes(urlLanguage)
     ? urlLanguage
     : (["en","es","pt","fr","de"].includes(savedLanguage) ? savedLanguage : detectBrowserLanguage());
@@ -66,10 +101,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function applyLanguage(lang) {
     currentLanguage = ["en","es","pt","fr","de"].includes(lang) ? lang : "en";
-    localStorage.setItem("passwordStrengthLanguage", currentLanguage);
-    const url = new URL(location.href);
-    url.searchParams.set("lang", currentLanguage);
-    history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+    safeStorageSet("passwordStrengthLanguage", currentLanguage);
+    safeReplaceUrlLanguage(currentLanguage);
     const htmlLang = {en:"en",es:"es",pt:"pt-BR",fr:"fr",de:"de"}[currentLanguage] || "en";
     document.documentElement.lang = htmlLang;
     const modalLangGroup = document.querySelector(".modal-lang");
@@ -242,21 +275,6 @@ document.addEventListener("DOMContentLoaded", () => {
       notes.querySelectorAll("details")[3].innerHTML = `<summary>What should a production login system do?</summary><p class="note">Use unique passwords, MFA where appropriate, breach screening, rate limiting, and a modern password-hashing configuration. OWASP currently recommends Argon2id first, with scrypt, bcrypt for legacy systems, or PBKDF2 where FIPS requirements apply.</p>`;
     }
   }
-
-  const privacyModal = document.getElementById("privacyModal");
-  const privacyAccept = document.getElementById("privacyAccept");
-  const modalLangEn = document.getElementById("modalLangEn");
-  const modalLangEs = document.getElementById("modalLangEs");
-  const modalLangPt = document.getElementById("modalLangPt");
-  const modalLangFr = document.getElementById("modalLangFr");
-  const modalLangDe = document.getElementById("modalLangDe");
-  const mobileLanguageSelect = document.getElementById("mobileLanguageSelect");
-  const modalLanguageSelect = document.getElementById("modalLanguageSelect");
-  const tabButtons = [...document.querySelectorAll(".tab-btn")];
-  const tabPanels = {
-    test: document.getElementById("tab-test"),
-    faq: document.getElementById("tab-faq")
-  };
 
   function activateTab(name) {
     Object.entries(tabPanels).forEach(([key, panel]) => {
@@ -683,4 +701,5 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   applyLanguage(currentLanguage);
+  window.__PASSWORD_LAB_BOOT_OK__ = true;
 });
