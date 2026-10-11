@@ -48,7 +48,7 @@ Then open `http://localhost:8080`.
 ## Docker
 
 ```bash
-docker compose up -d --build
+BUILD_SHA=$(git rev-parse --short=12 HEAD) BUILD_DATE=$(date -u +%FT%TZ) docker compose up -d --build
 ```
 
 Open `http://localhost:8080`.
@@ -56,8 +56,10 @@ Open `http://localhost:8080`.
 Health check:
 
 ```text
-http://localhost:8080/healthz
+http://localhost:8080/health
 ```
+
+It returns `{"healthy":true}`. Build metadata is available at `/build-info.json` and is also shown in the footer.
 
 ## Offline build
 
@@ -107,24 +109,16 @@ docker-compose.yml
 ## Validation
 
 ```bash
+npm install
+npm run build:web
 node --check assets/app.js
 node --check assets/i18n.js
 node --check assets/attack-rates.js
 node --check src/zxcvbn-entry.js
 pytest -q tests/test_*.py
-npm run build:web
 ```
 
-GitHub Actions builds the local bundle, runs the browser smoke test, builds the offline edition, and builds the Docker image after the repository is pushed.
-
-## Push to GitHub later
-
-Create an empty GitHub repository, then from this directory:
-
-```bash
-git remote add origin git@github.com:dwightmulcahy/password-lab.git
-git push -u origin main
-```
+GitHub Actions builds the local bundle and hardened Docker image, starts the container, verifies `/health`, then runs a real Chromium smoke test against that container.
 
 No Git tags or automatic release tagging are created by this project.
 

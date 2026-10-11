@@ -1,7 +1,8 @@
 from pathlib import Path
 import re
 
-HTML = Path('index.html').read_text(encoding='utf-8').lower()
+BUILT = Path('dist/index.html')
+HTML = (BUILT if BUILT.exists() else Path('index.html')).read_text(encoding='utf-8').lower()
 
 FORBIDDEN = [
     'googletagmanager', 'google-analytics', 'doubleclick', 'facebook.com/tr',

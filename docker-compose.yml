@@ -1,7 +1,28 @@
 services:
-  password-strength-lab:
-    build: .
-    container_name: password-strength-lab
+  password-lab:
+    build:
+      context: .
+      args:
+        BUILD_SHA: ${BUILD_SHA:-local}
+        BUILD_DATE: ${BUILD_DATE:-unknown}
+    container_name: password-lab
     restart: unless-stopped
     ports:
       - "8080:8080"
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+      - /var/cache/nginx:size=16m,mode=0755
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    pids_limit: 64
+    mem_limit: 128m
+    cpus: 0.50
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/health | grep -q '\"healthy\":true'"]
+      interval: 30s
+      timeout: 3s
+      start_period: 5s
+      retries: 3

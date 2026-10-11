@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-import contextlib
 import http.server
+import os
 import socketserver
 import threading
 from pathlib import Path
@@ -18,29 +18,30 @@ class QuietHandler(http.server.SimpleHTTPRequestHandler):
 
 
 def main():
-    handler = lambda *args, **kwargs: QuietHandler(*args, directory=str(ROOT), **kwargs)
-    server = socketserver.TCPServer(("127.0.0.1", PORT), handler)
-    thread = threading.Thread(target=server.serve_forever, daemon=True)
-    thread.start()
+    base_url = os.environ.get('PASSWORD_LAB_BASE_URL')
+    server = None
+    if not base_url:
+        handler = lambda *args, **kwargs: QuietHandler(*args, directory=str(ROOT), **kwargs)
+        server = socketserver.TCPServer(("127.0.0.1", PORT), handler)
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+        base_url = f'http://127.0.0.1:{PORT}'
 
     errors = []
     try:
         with sync_playwright() as p:
-            launch = {"headless": True, "args": ["--no-proxy-server", "--proxy-bypass-list=<-loopback>"]}
-            # CI uses Playwright's managed Chromium; local environments may expose /usr/bin/chromium.
-            if Path("/usr/bin/chromium").exists():
+            launch = {"headless": True}
+            if Path("/usr/bin/chromium").exists() and not os.environ.get('CI'):
                 launch["executable_path"] = "/usr/bin/chromium"
             browser = p.chromium.launch(**launch)
             page = browser.new_page()
             page.on("pageerror", lambda exc: errors.append(f"pageerror: {exc}"))
             page.on("console", lambda msg: errors.append(f"console: {msg.text}") if msg.type == "error" else None)
 
-            page.goto(f"http://127.0.0.1:{PORT}/?lang=en", wait_until="domcontentloaded")
+            page.goto(f"{base_url}/?lang=en", wait_until="domcontentloaded")
             page.wait_for_function("window.__PASSWORD_LAB_BOOT_OK__ === true")
             page.locator("#privacyAccept").click()
 
             page.locator("#password").fill("TestPassword123!")
-            page.locator("#scoreText").wait_for()
             page.wait_for_function("document.querySelector('#scoreText').textContent.includes('/4')")
             assert page.locator("#guessCount").inner_text() != "—"
             assert "16" in page.locator("#lengthStat").inner_text()
@@ -58,10 +59,13 @@ def main():
             assert generated and generated != original
             page.wait_for_function("document.querySelector('#scoreText').textContent.includes('/4')")
 
+            build_meta = page.locator('#buildMeta').inner_text()
+            assert 'Build' in build_meta
             browser.close()
     finally:
-        server.shutdown()
-        server.server_close()
+        if server:
+            server.shutdown()
+            server.server_close()
 
     if errors:
         raise AssertionError("Browser console/page errors:\n" + "\n".join(errors))
