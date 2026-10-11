@@ -12,8 +12,6 @@ for marker in FORBIDDEN:
     assert marker not in HTML, f'unexpected tracker reference: {marker}'
 
 ALLOWED_REMOTE_HOSTS = {
-    'esm.sh',
-    'registry.npmjs.org',
     'api.pwnedpasswords.com',
 }
 

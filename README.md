@@ -12,8 +12,9 @@ A browser-based password-strength and attack-scenario estimator built around zxc
 - Cryptographically secure password and passphrase generator
 - Optional Have I Been Pwned Pwned Passwords lookup using k-anonymity
 - Breached-password override so a compromised password is never presented as reassuringly strong
-- Runtime zxcvbn-ts 4.x auto-update with pinned compatible fallbacks
-- Offline bundled build
+- zxcvbn-ts and all language dictionaries bundled locally at build time
+- Dependency updates reviewed through Dependabot/CI rather than executed dynamically in visitors’ browsers
+- Offline-capable bundled build
 - Strict Content Security Policy and tracker-free network policy
 - Responsive/mobile layout and accessibility improvements
 - Docker deployment and health endpoint
@@ -24,20 +25,22 @@ The password itself stays in the browser.
 
 The optional Pwned Passwords lookup is performed only after the password field loses focus. The browser computes SHA-1 locally and sends only the first 5 hash characters to the Pwned Passwords range API with response padding enabled. The password and full hash are never transmitted.
 
-The online build contacts:
+The deployed page has no runtime dependency on npm or a JavaScript CDN. zxcvbn-ts and its dictionaries are bundled into the site during the build.
 
-- `registry.npmjs.org` to discover compatible zxcvbn-ts 4.x package versions
-- `esm.sh` to load those browser modules
-- `api.pwnedpasswords.com` only when a breach lookup is performed
+At runtime, the only optional third-party request is:
+
+- `api.pwnedpasswords.com` when a breach lookup is performed
 
 There are no analytics, advertising networks, tracking pixels, tag managers, or remote fonts.
 
 ## Run locally
 
-Because the online edition uses ES modules and CSP, serve it over HTTP rather than relying on `file://`:
+Build the local bundle, then serve the generated `dist/` directory:
 
 ```bash
-python3 -m http.server 8080
+npm install
+npm run build:web
+python3 -m http.server 8080 -d dist
 ```
 
 Then open `http://localhost:8080`.
@@ -89,11 +92,11 @@ assets/
   attack-rates.js      attack-rate assumptions
   i18n.js              translations
   styles.css            UI styles
-  zxcvbn-loader.js      compatible-version loader
 src/
-  offline-entry.js      pinned offline zxcvbn entry
+  zxcvbn-entry.js       pinned local zxcvbn entry
 tools/
-  build-offline.mjs     offline bundler
+  build-web.mjs         production bundle builder
+  build-offline.mjs     offline bundle builder
 tests/
   test_no_trackers.py   network/privacy guardrail
 Dockerfile
@@ -107,18 +110,19 @@ docker-compose.yml
 node --check assets/app.js
 node --check assets/i18n.js
 node --check assets/attack-rates.js
-node --check assets/zxcvbn-loader.js
-python3 tests/test_no_trackers.py
+node --check src/zxcvbn-entry.js
+pytest -q tests/test_*.py
+npm run build:web
 ```
 
-GitHub Actions also builds the offline edition and Docker image after the repository is pushed.
+GitHub Actions builds the local bundle, runs the browser smoke test, builds the offline edition, and builds the Docker image after the repository is pushed.
 
 ## Push to GitHub later
 
 Create an empty GitHub repository, then from this directory:
 
 ```bash
-git remote add origin git@github.com:YOUR-USER/password-strength-lab.git
+git remote add origin git@github.com:dwightmulcahy/password-lab.git
 git push -u origin main
 ```
 

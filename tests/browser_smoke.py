@@ -7,7 +7,8 @@ from pathlib import Path
 
 from playwright.sync_api import sync_playwright
 
-ROOT = Path(__file__).resolve().parents[1]
+REPO = Path(__file__).resolve().parents[1]
+ROOT = REPO / 'dist' if (REPO / 'dist' / 'index.html').exists() else REPO
 PORT = 8765
 
 
