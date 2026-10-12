@@ -38,7 +38,9 @@ html = html
   .replace('assets/zxcvbn-loader.js', 'assets/zxcvbn-bundle.js')
   .replace('type="module" src="assets/zxcvbn-bundle.js"', 'src="assets/zxcvbn-bundle.js"')
   .replace("script-src 'self' https://esm.sh", "script-src 'self'")
-  .replace("connect-src 'self' https://registry.npmjs.org https://api.pwnedpasswords.com https://esm.sh", "connect-src 'self' https://api.pwnedpasswords.com");
+  .replace("connect-src 'self' https://registry.npmjs.org https://api.pwnedpasswords.com https://esm.sh", "connect-src 'self' https://api.pwnedpasswords.com")
+  // frame-ancestors is ignored in a meta CSP. nginx sends it as a response header.
+  .replace("frame-ancestors 'none'; ", '');
 html = injectPassphraseGenerator(html);
 html = injectLayoutEnhancements(html);
 
