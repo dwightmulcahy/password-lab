@@ -59,6 +59,21 @@ def main():
             assert generated and generated != original
             page.wait_for_function("document.querySelector('#scoreText').textContent.includes('/4')")
 
+            page.locator("#generatorMode").select_option("passphrase")
+            page.wait_for_function("document.querySelector('#generatorSize').value === '6'")
+            assert page.locator("#generatorSize").get_attribute("min") == "4"
+            assert page.locator("#generatorSize").get_attribute("max") == "12"
+            assert page.evaluate("window.PASSPHRASE_WORDS.length") == 7776
+            assert page.locator("#generatorSeparator").is_visible()
+            assert "EFF" in page.locator("#generatorEntropy").inner_text()
+
+            page.locator("#generatorSize").fill("4")
+            page.locator("#generatorSeparator").select_option(".")
+            page.locator("#generatorCreate").click()
+            passphrase = page.locator("#password").input_value()
+            assert len(passphrase.split(".")) == 4
+            assert "51." in page.locator("#generatorEntropy").inner_text()
+
             build_meta = page.locator('#buildMeta').inner_text()
             assert 'Build' in build_meta
             browser.close()
