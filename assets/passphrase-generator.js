@@ -77,6 +77,7 @@
       if (!passphrase) return;
 
       const count = clampWords();
+      if (size.value !== String(count)) size.value = String(count);
       const bitsPerWord = Math.log2(words.length);
       const totalBits = count * bitsPerWord;
       entropy.textContent = `${text.entropy}: ${count} ${text.words} × ${bitsPerWord.toFixed(1)} ${text.bitsPerWord} ≈ ${totalBits.toFixed(1)} bits • ${text.source} • ${text.recommend}`;
