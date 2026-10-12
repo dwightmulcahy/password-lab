@@ -12,6 +12,12 @@
 .generator-tools-row .generator-panel{
   margin-top:0;
 }
+.calculate-password{
+  background:#1e6fbb;
+  border-color:#2f85d3;
+  white-space:nowrap;
+}
+.calculate-password:hover{background:#2582d3}
 .score-with-explanation{
   display:flex;
   justify-content:flex-end;
