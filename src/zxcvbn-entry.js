@@ -49,6 +49,15 @@ function detectLanguage() {
   return 'en';
 }
 
+const dicewareWords = common.dictionary['diceware-common'];
+window.PASSPHRASE_WORDS = Object.freeze(Array.isArray(dicewareWords) ? [...dicewareWords] : []);
+window.passphraseWordListInfo = Object.freeze({
+  name: 'EFF Large Wordlist for Passphrases',
+  source: '@zxcvbn-ts/language-common',
+  size: window.PASSPHRASE_WORDS.length,
+  bitsPerWord: window.PASSPHRASE_WORDS.length ? Math.log2(window.PASSPHRASE_WORDS.length) : 0,
+});
+
 window.OFFLINE_BUILD = true;
 window.passwordEstimators = {
   en: new ZxcvbnFactory(makeOptions(en)),
