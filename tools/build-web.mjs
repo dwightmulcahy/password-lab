@@ -1,6 +1,7 @@
 import { build } from 'esbuild';
 import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { execFileSync } from 'node:child_process';
+import { injectPassphraseGenerator } from './build-web-passphrase.mjs';
 
 function localGitSha() {
   try {
@@ -37,6 +38,7 @@ html = html
   .replace('type="module" src="assets/zxcvbn-bundle.js"', 'src="assets/zxcvbn-bundle.js"')
   .replace("script-src 'self' https://esm.sh", "script-src 'self'")
   .replace("connect-src 'self' https://registry.npmjs.org https://api.pwnedpasswords.com https://esm.sh", "connect-src 'self' https://api.pwnedpasswords.com");
+html = injectPassphraseGenerator(html);
 
 if (!html.includes('id="buildMeta"')) {
   html = html.replace('</footer>', `  <div id="buildMeta" class="build-meta">Build <code>${buildSha}</code> • ${buildDate}</div>\n  </footer>`);
