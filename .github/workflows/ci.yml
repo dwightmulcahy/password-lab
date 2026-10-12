@@ -26,6 +26,11 @@ jobs:
           node --check assets/i18n.js
           node --check assets/attack-rates.js
           node --check src/zxcvbn-entry.js
+      - name: Validate QNAP Compose
+        run: |
+          docker compose -f docker-compose.qnap.yml config > /tmp/password-lab-qnap.yml
+          grep -q '127.0.0.1' /tmp/password-lab-qnap.yml
+          grep -q '18081' /tmp/password-lab-qnap.yml
       - name: Build local web bundle
         run: BUILD_SHA="${GITHUB_SHA::12}" BUILD_DATE="$(date -u +%FT%TZ)" npm run build:web
       - name: Run regression tests
