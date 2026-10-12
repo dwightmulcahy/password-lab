@@ -19,5 +19,7 @@ def test_passphrase_generator_uses_four_to_twelve_words():
 
 
 def test_web_build_includes_passphrase_enhancer():
-    source = (REPO / "tools" / "build-web.mjs").read_text(encoding="utf-8")
-    assert "assets/passphrase-generator.js" in source
+    build = (REPO / "tools" / "build-web.mjs").read_text(encoding="utf-8")
+    helper = (REPO / "tools" / "build-web-passphrase.mjs").read_text(encoding="utf-8")
+    assert "injectPassphraseGenerator" in build
+    assert "assets/passphrase-generator.js" in helper
