@@ -3,6 +3,7 @@ import http.server
 import os
 import socketserver
 import threading
+import time
 from pathlib import Path
 
 from playwright.sync_api import sync_playwright
@@ -15,6 +16,24 @@ PORT = 8765
 class QuietHandler(http.server.SimpleHTTPRequestHandler):
     def log_message(self, format, *args):
         pass
+
+
+def wait_for_text_contains(locator, expected, timeout_ms=5000):
+    deadline = time.monotonic() + timeout_ms / 1000
+    while time.monotonic() < deadline:
+        if expected in locator.inner_text():
+            return
+        time.sleep(0.05)
+    raise AssertionError(f"Timed out waiting for {locator} to contain {expected!r}; got {locator.inner_text()!r}")
+
+
+def wait_for_input_value(locator, expected, timeout_ms=5000):
+    deadline = time.monotonic() + timeout_ms / 1000
+    while time.monotonic() < deadline:
+        if locator.input_value() == expected:
+            return
+        time.sleep(0.05)
+    raise AssertionError(f"Timed out waiting for {locator} value {expected!r}; got {locator.input_value()!r}")
 
 
 def main():
@@ -38,7 +57,7 @@ def main():
             page.on("console", lambda msg: errors.append(f"console: {msg.text}") if msg.type == "error" else None)
 
             page.goto(f"{base_url}/?lang=en", wait_until="domcontentloaded")
-            page.wait_for_function("window.__PASSWORD_LAB_BOOT_OK__ === true")
+            page.locator("#privacyAccept").wait_for(state="visible", timeout=5000)
             page.locator("#privacyAccept").click()
 
             # Typing should mark the analysis pending instead of calculating on every keystroke.
@@ -50,21 +69,21 @@ def main():
 
             # The button forces immediate analysis without requiring blur.
             page.locator("#calculatePassword").click()
-            page.wait_for_function("document.querySelector('#scoreText').textContent.includes('/4')")
+            wait_for_text_contains(page.locator("#scoreText"), "/4")
             assert page.locator("#guessCount").inner_text() != "—"
             assert page.locator("#strengthLabel").inner_text() != "No password"
 
             # Leaving focus in the field still auto-calculates after the debounce delay.
             page.locator("#password").fill("AnotherPassword456!")
             assert page.locator("#scoreText").inner_text() == "Score —"
-            page.wait_for_function("document.querySelector('#scoreText').textContent.includes('/4')", timeout=3000)
+            wait_for_text_contains(page.locator("#scoreText"), "/4", timeout_ms=3000)
             assert page.locator("#password").is_focused()
 
             # Enter is an immediate keyboard shortcut for Calculate.
             page.locator("#password").fill("EnterShortcut789!")
             assert page.locator("#scoreText").inner_text() == "Score —"
             page.locator("#password").press("Enter")
-            page.wait_for_function("document.querySelector('#scoreText').textContent.includes('/4')")
+            wait_for_text_contains(page.locator("#scoreText"), "/4")
 
             # Score explanation belongs with the displayed score.
             score_group = page.locator("#scoreWithExplanation")
@@ -91,10 +110,10 @@ def main():
             page.locator("#generatorCreate").click()
             generated = page.locator("#password").input_value()
             assert generated and generated != original
-            page.wait_for_function("document.querySelector('#scoreText').textContent.includes('/4')", timeout=3000)
+            wait_for_text_contains(page.locator("#scoreText"), "/4", timeout_ms=3000)
 
             page.locator("#generatorMode").select_option("passphrase")
-            page.wait_for_function("document.querySelector('#generatorSize').value === '6'")
+            wait_for_input_value(page.locator("#generatorSize"), "6")
             assert page.locator("#generatorSize").get_attribute("min") == "4"
             assert page.locator("#generatorSize").get_attribute("max") == "12"
             assert page.evaluate("window.PASSPHRASE_WORDS.length") == 7776
@@ -107,7 +126,7 @@ def main():
             passphrase = page.locator("#password").input_value()
             assert len(passphrase.split(".")) == 4
             assert "51." in page.locator("#generatorEntropy").inner_text()
-            page.wait_for_function("document.querySelector('#scoreText').textContent.includes('/4')", timeout=3000)
+            wait_for_text_contains(page.locator("#scoreText"), "/4", timeout_ms=3000)
 
             build_meta = page.locator('#buildMeta').inner_text()
             assert 'Build' in build_meta
