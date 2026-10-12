@@ -33,7 +33,7 @@ def main():
             if Path("/usr/bin/chromium").exists() and not os.environ.get('CI'):
                 launch["executable_path"] = "/usr/bin/chromium"
             browser = p.chromium.launch(**launch)
-            page = browser.new_page()
+            page = browser.new_page(viewport={"width": 1280, "height": 900})
             page.on("pageerror", lambda exc: errors.append(f"pageerror: {exc}"))
             page.on("console", lambda msg: errors.append(f"console: {msg.text}") if msg.type == "error" else None)
 
@@ -47,12 +47,28 @@ def main():
             assert "16" in page.locator("#lengthStat").inner_text()
             assert page.locator("#strengthLabel").inner_text() != "No password"
 
+            score_box = page.locator("#scoreText").bounding_box()
+            why_box = page.locator("#scoreWhy").bounding_box()
+            assert score_box and why_box
+            assert why_box["x"] >= score_box["x"]
+            assert abs(why_box["y"] - score_box["y"]) < 30
+
+            password_box = page.locator("#password").bounding_box()
+            generate_box = page.locator("#generatorToggle").bounding_box()
+            assert password_box and generate_box
+            assert generate_box["y"] > password_box["y"] + password_box["height"] - 4
+
             page.locator('.lang-btn[data-lang="es"]').click()
             assert page.locator("html").get_attribute("lang") == "es"
             assert "Prueba" in page.locator('label[for="password"]').inner_text()
 
             page.locator("#generatorToggle").click()
             assert page.locator("#generatorPanel").is_visible()
+            panel_box = page.locator("#generatorPanel").bounding_box()
+            generate_box = page.locator("#generatorToggle").bounding_box()
+            assert panel_box and generate_box
+            assert panel_box["x"] > generate_box["x"]
+
             original = page.locator("#password").input_value()
             page.locator("#generatorCreate").click()
             generated = page.locator("#password").input_value()
