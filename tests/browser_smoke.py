@@ -77,7 +77,7 @@ def main():
             page.locator("#password").fill("AnotherPassword456!")
             assert page.locator("#scoreText").inner_text() == "Score —"
             wait_for_text_contains(page.locator("#scoreText"), "/4", timeout_ms=3000)
-            assert page.locator("#password").is_focused()
+            assert page.evaluate("document.activeElement && document.activeElement.id") == "password"
 
             # Enter is an immediate keyboard shortcut for Calculate.
             page.locator("#password").fill("EnterShortcut789!")
