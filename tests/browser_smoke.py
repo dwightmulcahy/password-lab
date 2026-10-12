@@ -33,7 +33,7 @@ def main():
             if Path("/usr/bin/chromium").exists() and not os.environ.get('CI'):
                 launch["executable_path"] = "/usr/bin/chromium"
             browser = p.chromium.launch(**launch)
-            page = browser.new_page(viewport={"width": 1280, "height": 900})
+            page = browser.new_page()
             page.on("pageerror", lambda exc: errors.append(f"pageerror: {exc}"))
             page.on("console", lambda msg: errors.append(f"console: {msg.text}") if msg.type == "error" else None)
 
@@ -41,39 +41,57 @@ def main():
             page.wait_for_function("window.__PASSWORD_LAB_BOOT_OK__ === true")
             page.locator("#privacyAccept").click()
 
+            # Typing should mark the analysis pending instead of calculating on every keystroke.
             page.locator("#password").fill("TestPassword123!")
+            assert page.locator("#calculatePassword").is_visible()
+            assert page.locator("#scoreText").inner_text() == "Score —"
+            assert "pending" in page.locator("#strengthLabel").inner_text().lower()
+            assert "16" in page.locator("#lengthStat").inner_text()
+
+            # The button forces immediate analysis without requiring blur.
+            page.locator("#calculatePassword").click()
             page.wait_for_function("document.querySelector('#scoreText').textContent.includes('/4')")
             assert page.locator("#guessCount").inner_text() != "—"
-            assert "16" in page.locator("#lengthStat").inner_text()
             assert page.locator("#strengthLabel").inner_text() != "No password"
 
-            score_box = page.locator("#scoreText").bounding_box()
-            why_box = page.locator("#scoreWhy").bounding_box()
-            assert score_box and why_box
-            assert why_box["x"] >= score_box["x"]
-            assert abs(why_box["y"] - score_box["y"]) < 30
+            # Leaving focus in the field still auto-calculates after the debounce delay.
+            page.locator("#password").fill("AnotherPassword456!")
+            assert page.locator("#scoreText").inner_text() == "Score —"
+            page.wait_for_function("document.querySelector('#scoreText').textContent.includes('/4')", timeout=3000)
+            assert page.locator("#password").is_focused()
 
-            password_box = page.locator("#password").bounding_box()
-            generate_box = page.locator("#generatorToggle").bounding_box()
-            assert password_box and generate_box
-            assert generate_box["y"] > password_box["y"] + password_box["height"] - 4
+            # Enter is an immediate keyboard shortcut for Calculate.
+            page.locator("#password").fill("EnterShortcut789!")
+            assert page.locator("#scoreText").inner_text() == "Score —"
+            page.locator("#password").press("Enter")
+            page.wait_for_function("document.querySelector('#scoreText').textContent.includes('/4')")
+
+            # Score explanation belongs with the displayed score.
+            score_group = page.locator("#scoreWithExplanation")
+            assert score_group.locator("#scoreText").count() == 1
+            assert score_group.locator("#scoreWhy").count() == 1
 
             page.locator('.lang-btn[data-lang="es"]').click()
             assert page.locator("html").get_attribute("lang") == "es"
             assert "Prueba" in page.locator('label[for="password"]').inner_text()
+            assert page.locator("#calculatePassword").inner_text() == "Calcular"
+
+            # Generator lives under the password field with controls to its right on desktop.
+            password_box = page.locator(".password-row").bounding_box()
+            tools_box = page.locator("#generatorToolsRow").bounding_box()
+            assert password_box and tools_box and tools_box["y"] > password_box["y"]
 
             page.locator("#generatorToggle").click()
             assert page.locator("#generatorPanel").is_visible()
+            toggle_box = page.locator("#generatorToggle").bounding_box()
             panel_box = page.locator("#generatorPanel").bounding_box()
-            generate_box = page.locator("#generatorToggle").bounding_box()
-            assert panel_box and generate_box
-            assert panel_box["x"] > generate_box["x"]
+            assert toggle_box and panel_box and panel_box["x"] > toggle_box["x"]
 
             original = page.locator("#password").input_value()
             page.locator("#generatorCreate").click()
             generated = page.locator("#password").input_value()
             assert generated and generated != original
-            page.wait_for_function("document.querySelector('#scoreText').textContent.includes('/4')")
+            page.wait_for_function("document.querySelector('#scoreText').textContent.includes('/4')", timeout=3000)
 
             page.locator("#generatorMode").select_option("passphrase")
             page.wait_for_function("document.querySelector('#generatorSize').value === '6'")
@@ -89,6 +107,7 @@ def main():
             passphrase = page.locator("#password").input_value()
             assert len(passphrase.split(".")) == 4
             assert "51." in page.locator("#generatorEntropy").inner_text()
+            page.wait_for_function("document.querySelector('#scoreText').textContent.includes('/4')", timeout=3000)
 
             build_meta = page.locator('#buildMeta').inner_text()
             assert 'Build' in build_meta
