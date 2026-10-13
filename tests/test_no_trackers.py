@@ -16,6 +16,10 @@ ALLOWED_REMOTE_HOSTS = {
     'api.pwnedpasswords.com',
 }
 
-hosts = set(re.findall(r'https://([a-z0-9.-]+)', HTML))
+# Ordinary <a href> links do not make network requests unless a visitor clicks
+# them. Exclude anchors so the guardrail stays focused on resources and runtime
+# connections the page itself can initiate.
+html_without_anchors = re.sub(r'<a\b[^>]*>', '', HTML)
+hosts = set(re.findall(r'https://([a-z0-9.-]+)', html_without_anchors))
 unexpected = hosts - ALLOWED_REMOTE_HOSTS
 assert not unexpected, f'unexpected remote hosts: {sorted(unexpected)}'
