@@ -2,9 +2,11 @@ FROM node:22-alpine AS build
 WORKDIR /app
 ARG BUILD_SHA=local
 ARG BUILD_DATE=unknown
+ARG BUILD_VERSION=dev
 ARG PUBLIC_SITE_URL=http://localhost:8080
 ENV BUILD_SHA=${BUILD_SHA} \
     BUILD_DATE=${BUILD_DATE} \
+    BUILD_VERSION=${BUILD_VERSION} \
     PUBLIC_SITE_URL=${PUBLIC_SITE_URL}
 COPY package.json ./
 RUN npm install --no-audit --no-fund

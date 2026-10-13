@@ -5,6 +5,7 @@ services:
       args:
         BUILD_SHA: ${BUILD_SHA:-local}
         BUILD_DATE: ${BUILD_DATE:-unknown}
+        BUILD_VERSION: ${BUILD_VERSION:-dev}
         PUBLIC_SITE_URL: ${PUBLIC_SITE_URL:-http://localhost:8080}
     container_name: password-lab
     restart: unless-stopped

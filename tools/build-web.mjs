@@ -16,6 +16,7 @@ const buildSha = process.env.BUILD_SHA || localGitSha();
 const buildDate = process.env.BUILD_DATE && process.env.BUILD_DATE !== 'unknown'
   ? process.env.BUILD_DATE
   : new Date().toISOString();
+const buildVersion = process.env.BUILD_VERSION || 'dev';
 const publicSiteUrl = (process.env.PUBLIC_SITE_URL || 'http://localhost:8080').replace(/\/$/, '');
 
 await rm('dist', { recursive: true, force: true });
@@ -41,7 +42,11 @@ html = html
   .replace("script-src 'self' https://esm.sh", "script-src 'self'")
   .replace("connect-src 'self' https://registry.npmjs.org https://api.pwnedpasswords.com https://esm.sh", "connect-src 'self' https://api.pwnedpasswords.com")
   // frame-ancestors is ignored in a meta CSP. nginx sends it as a response header.
-  .replace("frame-ancestors 'none'; ", '');
+  .replace("frame-ancestors 'none'; ", '')
+  .replace(
+    '<h1 data-i18n="title">Password Strength Lab</h1>',
+    `<h1><span data-i18n="title">Password Strength Lab</span> <span id="versionBadge" class="version-badge">${buildVersion}</span></h1>`
+  );
 html = injectPassphraseGenerator(html);
 html = injectLayoutEnhancements(html);
 
@@ -50,5 +55,5 @@ if (!html.includes('id="buildMeta"')) {
 }
 
 await writeFile('dist/index.html', html);
-await writeFile('dist/build-info.json', `${JSON.stringify({ build_sha: buildSha, build_date: buildDate, site_url: publicSiteUrl })}\n`);
-console.log(`Web build written to dist/ (build ${buildSha}, site ${publicSiteUrl})`);
+await writeFile('dist/build-info.json', `${JSON.stringify({ build_sha: buildSha, build_date: buildDate, version: buildVersion, site_url: publicSiteUrl })}\n`);
+console.log(`Web build written to dist/ (version ${buildVersion}, build ${buildSha}, site ${publicSiteUrl})`);
