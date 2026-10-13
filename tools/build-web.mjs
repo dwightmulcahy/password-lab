@@ -3,6 +3,7 @@ import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { execFileSync } from 'node:child_process';
 import { injectPassphraseGenerator } from './build-web-passphrase.mjs';
 import { injectLayoutEnhancements } from './build-web-layout.mjs';
+import { injectAbout } from './build-web-about.mjs';
 
 function localGitSha() {
   try {
@@ -48,6 +49,7 @@ html = html
     `<h1><span data-i18n="title">Password Strength Lab</span> <span id="versionBadge" class="version-badge">${buildVersion}</span></h1>`
   );
 html = injectPassphraseGenerator(html);
+html = injectAbout(html);
 html = injectLayoutEnhancements(html);
 
 if (!html.includes('id="buildMeta"')) {

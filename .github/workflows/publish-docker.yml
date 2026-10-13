@@ -37,10 +37,12 @@ jobs:
           node --check assets/i18n.js
           node --check assets/attack-rates.js
           node --check assets/passphrase-generator.js
+          node --check assets/about.js
           node --check src/zxcvbn-entry.js
           node --check tools/build-web.mjs
           node --check tools/build-web-passphrase.mjs
           node --check tools/build-web-layout.mjs
+          node --check tools/build-web-about.mjs
       - name: Validate QNAP Compose
         run: |
           docker compose -f docker-compose.qnap.yml config > /tmp/password-lab-qnap.yml
@@ -70,10 +72,12 @@ jobs:
         run: |
           python -m pip install playwright
           python -m playwright install --with-deps chromium
-      - name: Run browser smoke test against Docker
+      - name: Run browser smoke tests against Docker
         env:
           PASSWORD_LAB_BASE_URL: http://127.0.0.1:18080
-        run: python3 tests/browser_smoke.py
+        run: |
+          python3 tests/browser_smoke.py
+          python3 tests/about_smoke.py
       - name: Stop release candidate image
         if: always()
         run: docker rm -f password-lab-release || true
