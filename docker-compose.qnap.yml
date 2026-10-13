@@ -3,6 +3,7 @@
 # Password Lab publishes only to QNAP loopback so a host-network Hotpot instance
 # can reach it without exposing the application port directly to the LAN.
 # Default upstream for Hotpot: http://127.0.0.1:18081
+# Public site: https://passwordlab.dwights.dev/
 
 services:
   password-lab:
@@ -11,6 +12,7 @@ services:
       args:
         BUILD_SHA: ${BUILD_SHA:-local}
         BUILD_DATE: ${BUILD_DATE:-unknown}
+        PUBLIC_SITE_URL: ${PUBLIC_SITE_URL:-https://passwordlab.dwights.dev}
     container_name: password-lab
     restart: unless-stopped
     ports:

@@ -2,6 +2,7 @@ from pathlib import Path
 
 DOCKERFILE = Path('Dockerfile').read_text(encoding='utf-8')
 COMPOSE = Path('docker-compose.yml').read_text(encoding='utf-8')
+QNAP_COMPOSE = Path('docker-compose.qnap.yml').read_text(encoding='utf-8')
 NGINX = Path('nginx.conf').read_text(encoding='utf-8')
 BUILD = Path('tools/build-web.mjs').read_text(encoding='utf-8')
 
@@ -31,3 +32,10 @@ def test_runtime_csp_only_allows_pwned_passwords_connection():
 def test_build_metadata_is_generated():
     assert 'build-info.json' in BUILD
     assert 'buildMeta' in BUILD
+    assert 'PUBLIC_SITE_URL' in BUILD
+    assert 'site_url' in BUILD
+
+
+def test_qnap_build_uses_production_site_url():
+    assert 'PUBLIC_SITE_URL: ${PUBLIC_SITE_URL:-https://passwordlab.dwights.dev}' in QNAP_COMPOSE
+    assert 'https://passwordlab.dwights.dev/' in QNAP_COMPOSE

@@ -16,6 +16,7 @@ const buildSha = process.env.BUILD_SHA || localGitSha();
 const buildDate = process.env.BUILD_DATE && process.env.BUILD_DATE !== 'unknown'
   ? process.env.BUILD_DATE
   : new Date().toISOString();
+const publicSiteUrl = (process.env.PUBLIC_SITE_URL || 'http://localhost:8080').replace(/\/$/, '');
 
 await rm('dist', { recursive: true, force: true });
 await mkdir('dist/assets', { recursive: true });
@@ -49,5 +50,5 @@ if (!html.includes('id="buildMeta"')) {
 }
 
 await writeFile('dist/index.html', html);
-await writeFile('dist/build-info.json', `${JSON.stringify({ build_sha: buildSha, build_date: buildDate })}\n`);
-console.log(`Web build written to dist/ (build ${buildSha})`);
+await writeFile('dist/build-info.json', `${JSON.stringify({ build_sha: buildSha, build_date: buildDate, site_url: publicSiteUrl })}\n`);
+console.log(`Web build written to dist/ (build ${buildSha}, site ${publicSiteUrl})`);
