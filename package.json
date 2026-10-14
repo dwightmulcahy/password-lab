@@ -2,8 +2,9 @@
   "name": "password-strength-lab",
   "private": true,
   "scripts": {
-    "build:web": "node tools/build-web.mjs",
-    "build:offline": "node tools/build-offline.mjs"
+    "sync:featured": "node tools/sync-featured-projects.mjs",
+    "build:web": "node tools/sync-featured-projects.mjs && node tools/build-web.mjs",
+    "build:offline": "node tools/sync-featured-projects.mjs && node tools/build-offline.mjs"
   },
   "dependencies": {
     "@zxcvbn-ts/core": "4.2.0",
