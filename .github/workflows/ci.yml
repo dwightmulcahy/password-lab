@@ -28,12 +28,16 @@ jobs:
           node --check assets/about.js
           node --check src/zxcvbn-entry.js
           node --check tools/build-web-about.mjs
+          node --check tools/sync-featured-projects.mjs
       - name: Validate QNAP Compose
         run: |
           docker compose -f docker-compose.qnap.yml config > /tmp/password-lab-qnap.yml
           grep -q '127.0.0.1' /tmp/password-lab-qnap.yml
           grep -q '18081' /tmp/password-lab-qnap.yml
       - name: Build local web bundle
+        env:
+          FEATURED_PROJECTS_REQUIRE_LIVE: '1'
+          GITHUB_TOKEN: ${{ github.token }}
         run: BUILD_SHA="${GITHUB_SHA::12}" BUILD_DATE="$(date -u +%FT%TZ)" BUILD_VERSION="ci" npm run build:web
       - name: Run regression tests
         run: |
