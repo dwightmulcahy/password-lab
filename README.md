@@ -33,6 +33,14 @@ At runtime, the only optional third-party request is:
 
 There are no analytics, advertising networks, tracking pixels, tag managers, or remote fonts.
 
+## Featured projects
+
+The rotating Featured Project card on the About tab is sourced from the public GitHub list at `https://github.com/stars/dwightmulcahy/lists/featured`.
+
+`npm run build:web`, `npm run build:offline`, and Docker builds refresh `assets/featured-projects.json` from that list before building. Repository descriptions and primary languages are filled from GitHub's public repository metadata. The browser reads only the generated local JSON file, so visitors do not make runtime requests to GitHub.
+
+A committed snapshot is retained as a build fallback if GitHub is temporarily unavailable. CI requires a successful live sync so markup changes on GitHub cannot silently leave the production carousel stale.
+
 ## Run locally
 
 Build the local bundle, then serve the generated `dist/` directory:
@@ -90,17 +98,19 @@ Precedence is URL parameter → saved preference → browser language → Englis
 
 ```text
 assets/
-  app.js               application logic
-  attack-rates.js      attack-rate assumptions
-  i18n.js              translations
-  styles.css            UI styles
+  app.js                    application logic
+  attack-rates.js           attack-rate assumptions
+  featured-projects.json    build-time GitHub Featured-list snapshot
+  i18n.js                   translations
+  styles.css                UI styles
 src/
-  zxcvbn-entry.js       pinned local zxcvbn entry
+  zxcvbn-entry.js            pinned local zxcvbn entry
 tools/
-  build-web.mjs         production bundle builder
-  build-offline.mjs     offline bundle builder
+  build-web.mjs              production bundle builder
+  build-offline.mjs          offline bundle builder
+  sync-featured-projects.mjs GitHub Featured-list build sync
 tests/
-  test_no_trackers.py   network/privacy guardrail
+  test_no_trackers.py        network/privacy guardrail
 Dockerfile
 nginx.conf
 docker-compose.yml
@@ -114,6 +124,8 @@ npm run build:web
 node --check assets/app.js
 node --check assets/i18n.js
 node --check assets/attack-rates.js
+node --check assets/about.js
+node --check tools/sync-featured-projects.mjs
 node --check src/zxcvbn-entry.js
 pytest -q tests/test_*.py
 ```
