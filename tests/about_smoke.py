@@ -50,6 +50,22 @@ def main():
         assert page.locator("#featuredTitle").inner_text() != title
         assert page.locator("#featuredLink").get_attribute("href").startswith("https://github.com/")
 
+        # Every supported language translates the About tab and its static content.
+        expected = {
+            "en": ("About", "Why password health matters to me", "Get in Touch"),
+            "es": ("Acerca de", "Por qué me importa la salud de las contraseñas", "Contacto"),
+            "pt": ("Sobre", "Por que a saúde das senhas é importante para mim", "Entre em contato"),
+            "fr": ("À propos", "Pourquoi la santé des mots de passe compte pour moi", "Me contacter"),
+            "de": ("Über", "Warum mir Passwortsicherheit wichtig ist", "Kontakt"),
+        }
+        language_select = page.locator("#mobileLanguageSelect")
+        for code, (tab_text, intro_title, contact_title) in expected.items():
+            language_select.select_option(code)
+            page.wait_for_timeout(25)
+            assert page.locator('.tab-btn[data-tab="about"]').inner_text() == tab_text
+            assert page.locator(".about-intro .section-title").inner_text() == intro_title
+            assert page.locator("#aboutContactHeading").inner_text() == contact_title
+
         page.locator('.tab-btn[data-tab="test"]').click()
         assert page.locator("#tab-test").is_visible()
         assert not page.locator("#tab-about").is_visible()
