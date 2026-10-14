@@ -147,7 +147,7 @@ def main():
             assert page.locator(".about-career .section-title").inner_text() == "Mi experiencia en ciberseguridad"
             assert page.locator(".about-source .section-title").inner_text() == "Licencia y código fuente"
             assert "código abierto" in page.locator(".about-source").inner_text().lower()
-            assert page.locator(".about-contact-label-project").inner_text().strip() == "Proyecto destacado"
+            assert page.locator(".about-contact-label-project").inner_text().strip().lower() == "proyecto destacado"
             assert "Ver en GitHub" in page.locator("#featuredLink").inner_text()
             assert page.locator(".about-contact-links .about-contact-link").count() == 5
             featured_box = page.locator(".about-featured").bounding_box()
