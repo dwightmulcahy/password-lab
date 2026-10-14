@@ -4,6 +4,7 @@ import { execFileSync } from 'node:child_process';
 import { injectPassphraseGenerator } from './build-web-passphrase.mjs';
 import { injectLayoutEnhancements } from './build-web-layout.mjs';
 import { injectAbout } from './build-web-about.mjs';
+import { injectPrivacyEnhancements } from './build-web-privacy.mjs';
 
 function localGitSha() {
   try {
@@ -50,6 +51,7 @@ html = html
   );
 html = injectPassphraseGenerator(html);
 html = injectAbout(html);
+html = injectPrivacyEnhancements(html);
 html = injectLayoutEnhancements(html);
 
 if (!html.includes('id="buildMeta"')) {
