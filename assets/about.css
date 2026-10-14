@@ -1,1 +1,91 @@
-.about-stack{display:grid;gap:16px}.about-intro p,.about-career p,.about-featured p{line-height:1.65}.about-kicker{margin:0 0 6px;color:var(--muted);font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}.about-links{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}.about-links a,.featured-link{display:inline-flex;align-items:center;gap:6px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;text-decoration:none;color:#bcd6f5}.about-links a:hover,.featured-link:hover{border-color:#4d75a3;background:rgba(255,255,255,.03)}.about-featured-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}.featured-nav{display:flex;align-items:center;gap:8px}.featured-nav-btn{width:34px;height:34px;padding:0;border-radius:999px;font-size:22px;line-height:1}.featured-count{min-width:42px;text-align:center;color:var(--muted);font-size:12px}.featured-project-card{margin-top:12px;padding:18px;border:1px solid var(--line);border-radius:14px;background:rgba(0,0,0,.12)}.featured-project-card h3{margin:5px 0 8px;font-size:22px}.featured-project-meta{display:flex;justify-content:space-between;gap:10px}.featured-language{font-size:12px;font-weight:800;color:var(--muted)}@media(max-width:640px){.about-featured-head{flex-direction:column}.featured-nav{align-self:flex-start}}
+.about-stack{display:grid;gap:16px}
+.about-intro p,.about-career p{line-height:1.65}
+.about-kicker{margin:0 0 6px;color:var(--muted);font-size:12px;font-weight:800;letter-spacing:.09em;text-transform:uppercase}
+
+.about-contact{
+  --about-teal:#5cc8d6;
+  --about-docker:#4fb0f0;
+  position:relative;
+  overflow:hidden;
+  padding:30px 32px 28px;
+  background:linear-gradient(180deg,rgba(18,36,58,.96),rgba(11,25,42,.96));
+  border:1px solid var(--line);
+  border-radius:20px;
+  box-shadow:var(--shadow);
+}
+.about-contact::before{
+  content:"";
+  position:absolute;
+  top:0;
+  left:0;
+  right:0;
+  height:4px;
+  background:linear-gradient(90deg,var(--accent),var(--purple),var(--about-teal));
+}
+.about-contact>h2{margin:0 0 6px;font-size:32px;line-height:1.1;letter-spacing:-.02em}
+.about-contact-subtitle{margin:0 0 24px;color:var(--muted);font-size:16px}
+.about-contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.about-contact-card{
+  display:flex;
+  flex-direction:column;
+  min-width:0;
+  min-height:300px;
+  padding:28px 30px;
+  background:rgba(0,0,0,.2);
+  border:1px solid var(--line);
+  border-radius:18px;
+}
+.about-contact-label{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin:0 0 28px;
+  font-size:14px;
+  font-weight:850;
+  text-transform:uppercase;
+  letter-spacing:.16em;
+}
+.about-contact-label-project{color:var(--accent)}
+.about-contact-label-developer{color:var(--purple)}
+.about-label-icon{width:18px;height:18px;flex:0 0 auto}
+.about-contact-title{margin:0 0 8px;font-size:28px;line-height:1.15;letter-spacing:-.02em}
+.about-contact-body{margin:0 0 18px;color:#c6d3e3;line-height:1.55;font-size:16px}
+.about-contact-meta{margin:0 0 24px;color:var(--muted);font-size:13px;font-weight:750}
+.about-featured-foot{margin-top:auto;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.about-contact-link{display:inline-flex;align-items:center;gap:13px;width:max-content;max-width:100%;color:var(--text);text-decoration:none;font-size:16px;font-weight:650}
+.about-contact-link:hover{color:#fff;text-decoration:underline;text-underline-offset:3px}
+.about-contact-launch{color:var(--accent);font-weight:800}
+.about-contact-icon{width:21px;height:21px;flex:0 0 auto}
+.about-contact-launch .about-contact-icon{width:17px;height:17px}
+.about-contact-links{display:flex;flex-direction:column;gap:18px}
+.about-icon-email,.about-icon-linkedin,.about-icon-book{color:var(--accent)}
+.about-icon-github{color:var(--purple)}
+.about-icon-docker{color:var(--about-docker)}
+.featured-nav{display:flex;align-items:center;gap:7px}
+.featured-nav-btn{
+  width:38px;
+  height:38px;
+  padding:0;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:50%;
+  background:rgba(255,255,255,.03);
+}
+.featured-nav-btn svg{width:18px;height:18px}
+.featured-count{min-width:44px;text-align:center;color:#d3deea;font-size:12px;font-weight:700;font-variant-numeric:tabular-nums}
+
+@media(max-width:760px){
+  .about-contact{padding:24px 20px 22px}
+  .about-contact-grid{grid-template-columns:1fr;gap:16px}
+  .about-contact-card{min-height:0;padding:22px 20px}
+  .about-contact-label{margin-bottom:20px}
+  .about-contact-title{font-size:24px}
+}
+
+@media(max-width:480px){
+  .about-contact>h2{font-size:28px}
+  .about-contact-subtitle{font-size:14px}
+  .about-featured-foot{align-items:flex-start;flex-direction:column}
+  .about-contact-link{font-size:14px;overflow-wrap:anywhere;width:auto}
+}
