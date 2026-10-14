@@ -21,11 +21,11 @@ A browser-based password-strength and attack-scenario estimator built around zxc
 
 ## Privacy model
 
-The password itself stays in the browser.
+The password itself stays in the browser. Password-strength analysis, pattern detection, guess estimates, crack-time calculations, and password/passphrase generation all run locally.
 
-The optional Pwned Passwords lookup is performed only after the password field loses focus. The browser computes SHA-1 locally and sends only the first 5 hash characters to the Pwned Passwords range API with response padding enabled. The password and full hash are never transmitted.
+The optional Pwned Passwords lookup runs with password analysis after Calculate, Enter, or the typing debounce completes. The browser computes SHA-1 locally and sends only the first 5 hash characters to the Pwned Passwords range API with response padding enabled. The password and full hash are never transmitted.
 
-The deployed page has no runtime dependency on npm or a JavaScript CDN. zxcvbn-ts and its dictionaries are bundled into the site during the build.
+The deployed page has no runtime dependency on npm or a JavaScript CDN. zxcvbn-ts, its language dictionaries, and generator data are bundled into the site during the build.
 
 At runtime, the only optional third-party request is:
 
@@ -102,15 +102,18 @@ assets/
   attack-rates.js           attack-rate assumptions
   featured-projects.json    build-time GitHub Featured-list snapshot
   i18n.js                   translations
+  privacy-ui.js             browser-local privacy copy and runtime labels
   styles.css                UI styles
 src/
   zxcvbn-entry.js            pinned local zxcvbn entry
 tools/
   build-web.mjs              production bundle builder
+  build-web-privacy.mjs      privacy FAQ/build injection
   build-offline.mjs          offline bundle builder
   sync-featured-projects.mjs GitHub Featured-list build sync
 tests/
   test_no_trackers.py        network/privacy guardrail
+  test_privacy_build.py      privacy copy and layout regression coverage
 Dockerfile
 nginx.conf
 docker-compose.yml
@@ -125,6 +128,8 @@ node --check assets/app.js
 node --check assets/i18n.js
 node --check assets/attack-rates.js
 node --check assets/about.js
+node --check assets/privacy-ui.js
+node --check tools/build-web-privacy.mjs
 node --check tools/sync-featured-projects.mjs
 node --check src/zxcvbn-entry.js
 pytest -q tests/test_*.py
