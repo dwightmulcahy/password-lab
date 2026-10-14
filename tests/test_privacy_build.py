@@ -28,3 +28,10 @@ def test_privacy_copy_describes_bundled_browser_local_analysis():
     assert "Breach check runs with the next password analysis." in script
     assert "only the first 5 hash characters" in script
     assert "no runtime CDN/npm dependency" in script
+
+
+def test_app_owned_translations_disable_browser_auto_translation():
+    html = (DIST / "index.html").read_text(encoding="utf-8")
+
+    assert '<html lang="en" translate="no" class="notranslate">' in html
+    assert '<meta name="google" content="notranslate">' in html
