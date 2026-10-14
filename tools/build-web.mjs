@@ -39,6 +39,8 @@ await rm('dist/assets/zxcvbn-loader.js', { force: true });
 
 let html = await readFile('index.html', 'utf8');
 html = html
+  .replace('<html lang="en">', '<html lang="en" translate="no" class="notranslate">')
+  .replace('<meta charset="utf-8" />', '<meta charset="utf-8" />\n  <meta name="google" content="notranslate">')
   .replace('assets/zxcvbn-loader.js', 'assets/zxcvbn-bundle.js')
   .replace('type="module" src="assets/zxcvbn-bundle.js"', 'src="assets/zxcvbn-bundle.js"')
   .replace("script-src 'self' https://esm.sh", "script-src 'self'")
