@@ -104,6 +104,7 @@ def main():
             assert page.locator("html").get_attribute("lang") == "es"
             assert "Prueba" in page.locator('label[for="password"]').inner_text()
             assert page.locator("#calculatePassword").inner_text() == "Calcular"
+            assert page.locator('.tab-btn[data-tab="about"]').inner_text() == "Acerca de"
 
             # Generator lives under the password field with controls to its right on desktop.
             password_box = page.locator(".password-row").bounding_box()
@@ -138,10 +139,16 @@ def main():
             assert "51." in page.locator("#generatorEntropy").inner_text()
             wait_for_text_contains(page.locator("#scoreText"), "/4", timeout_ms=3000)
 
-            # About uses the BrewWaterSolver-style Get in Touch card: featured project + developer links.
+            # About follows the selected language while preserving project metadata and links.
             page.locator('.tab-btn[data-tab="about"]').click()
             assert page.locator("#tab-about").is_visible()
-            assert page.locator("#aboutContactHeading").inner_text() == "Get in Touch"
+            assert page.locator("#aboutContactHeading").inner_text() == "Contacto"
+            assert page.locator(".about-intro .section-title").inner_text() == "Por qué me importa la salud de las contraseñas"
+            assert page.locator(".about-career .section-title").inner_text() == "Mi experiencia en ciberseguridad"
+            assert page.locator(".about-source .section-title").inner_text() == "Licencia y código fuente"
+            assert "código abierto" in page.locator(".about-source").inner_text().lower()
+            assert page.locator(".about-contact-label-project").inner_text().strip() == "Proyecto destacado"
+            assert "Ver en GitHub" in page.locator("#featuredLink").inner_text()
             assert page.locator(".about-contact-links .about-contact-link").count() == 5
             featured_box = page.locator(".about-featured").bounding_box()
             developer_box = page.locator(".about-developer").bounding_box()
@@ -159,7 +166,7 @@ def main():
             )
 
             # About clearly declares the project license and links to source + full license.
-            assert "MIT License" in page.locator(".about-source").inner_text()
+            assert "Licencia MIT" in page.locator(".about-source").inner_text()
             source_links = page.locator(".about-source-links a")
             assert source_links.count() == 2
             assert source_links.nth(0).get_attribute("href") == "https://github.com/dwightmulcahy/password-lab"
