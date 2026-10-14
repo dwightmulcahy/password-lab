@@ -136,10 +136,14 @@ def main():
             featured_box = page.locator(".about-featured").bounding_box()
             developer_box = page.locator(".about-developer").bounding_box()
             assert featured_box and developer_box and developer_box["x"] > featured_box["x"]
-            assert " / 5" in page.locator("#featuredCount").inner_text()
+            wait_for_text_contains(page.locator("#featuredCount"), " / ")
+            current, total = (int(value.strip()) for value in page.locator("#featuredCount").inner_text().split("/"))
+            assert 1 <= current <= total
+            assert total >= 2
             previous_title = page.locator("#featuredTitle").inner_text()
             page.locator("#featuredNext").click()
             assert page.locator("#featuredTitle").inner_text() != previous_title
+            assert page.locator("#featuredLink").get_attribute("href").startswith("https://github.com/")
             assert "linear-gradient" in page.evaluate(
                 "getComputedStyle(document.querySelector('.about-contact'),'::before').backgroundImage"
             )
