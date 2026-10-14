@@ -128,6 +128,22 @@ def main():
             assert "51." in page.locator("#generatorEntropy").inner_text()
             wait_for_text_contains(page.locator("#scoreText"), "/4", timeout_ms=3000)
 
+            # About uses the BrewWaterSolver-style Get in Touch card: featured project + developer links.
+            page.locator('.tab-btn[data-tab="about"]').click()
+            assert page.locator("#tab-about").is_visible()
+            assert page.locator("#aboutContactHeading").inner_text() == "Get in Touch"
+            assert page.locator(".about-contact-links .about-contact-link").count() == 5
+            featured_box = page.locator(".about-featured").bounding_box()
+            developer_box = page.locator(".about-developer").bounding_box()
+            assert featured_box and developer_box and developer_box["x"] > featured_box["x"]
+            assert " / 5" in page.locator("#featuredCount").inner_text()
+            previous_title = page.locator("#featuredTitle").inner_text()
+            page.locator("#featuredNext").click()
+            assert page.locator("#featuredTitle").inner_text() != previous_title
+            assert "linear-gradient" in page.evaluate(
+                "getComputedStyle(document.querySelector('.about-contact'),'::before').backgroundImage"
+            )
+
             build_meta = page.locator('#buildMeta').inner_text()
             assert 'Build' in build_meta
             browser.close()
