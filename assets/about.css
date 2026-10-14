@@ -1,6 +1,9 @@
 .about-stack{display:grid;gap:16px}
-.about-intro p,.about-career p{line-height:1.65}
+.about-intro p,.about-career p,.about-source p{line-height:1.65}
 .about-kicker{margin:0 0 6px;color:var(--muted);font-size:12px;font-weight:800;letter-spacing:.09em;text-transform:uppercase}
+.about-source-links{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+.about-source-links a{display:inline-flex;align-items:center;gap:6px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;text-decoration:none;color:#bcd6f5;font-weight:750}
+.about-source-links a:hover{border-color:#4d75a3;background:rgba(255,255,255,.03);color:#fff}
 
 .about-contact{
   --about-teal:#5cc8d6;
