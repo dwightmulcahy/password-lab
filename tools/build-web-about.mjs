@@ -16,6 +16,16 @@ const ABOUT_PANEL = `
           <p>Earlier in my career I worked deeply in high-performance network packet processing and co-authored <em>packetC Programming</em>, which covers programming scalable network applications with security-focused language features and controlled memory access.</p>
         </section>
 
+        <section class="card pad about-source">
+          <p class="about-kicker">Open source</p>
+          <h2 class="section-title">License &amp; source</h2>
+          <p>Password Strength Lab is open-source software released under the MIT License. You can inspect the source, run your own copy, report issues, or contribute through the public GitHub repository.</p>
+          <div class="about-source-links">
+            <a href="https://github.com/dwightmulcahy/password-lab" target="_blank" rel="noopener">View Password Lab on GitHub ↗</a>
+            <a href="https://github.com/dwightmulcahy/password-lab/blob/main/LICENSE" target="_blank" rel="noopener">MIT License ↗</a>
+          </div>
+        </section>
+
         <section class="about-contact" id="aboutContact" aria-labelledby="aboutContactHeading">
           <h2 id="aboutContactHeading">Get in Touch</h2>
           <p class="about-contact-subtitle">Explore active projects &amp; developer credentials.</p>
