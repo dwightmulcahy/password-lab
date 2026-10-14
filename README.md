@@ -125,3 +125,7 @@ No Git tags or automatic release tagging are created by this project.
 ## Security
 
 See `SECURITY.md`. Do not include real passwords or credentials in issues, screenshots, test fixtures, or pull requests.
+
+## License
+
+Password Strength Lab is open-source software released under the MIT License. See `LICENSE` for the full terms.
