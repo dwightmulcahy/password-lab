@@ -3,6 +3,11 @@ import { readFile, writeFile } from 'node:fs/promises';
 const LIST_URL = 'https://github.com/stars/dwightmulcahy/lists/featured';
 const OUTPUT_PATH = new URL('../assets/featured-projects.json', import.meta.url);
 const MAX_PAGES = 10;
+const RESERVED_FIRST_SEGMENTS = new Set([
+  'about', 'collections', 'customer-stories', 'enterprise', 'events', 'explore',
+  'features', 'login', 'marketplace', 'new', 'organizations', 'pricing', 'readme',
+  'search', 'security', 'settings', 'site', 'sponsors', 'stars', 'topics', 'users',
+]);
 
 function decodeHtml(value) {
   return value
@@ -16,22 +21,31 @@ function decodeHtml(value) {
 function extractRepoRefs(html) {
   const refs = [];
   const seen = new Set();
-  const patterns = [
+  const add = (ownerValue, nameValue) => {
+    const owner = decodeHtml(ownerValue);
+    const name = decodeHtml(nameValue);
+    if (RESERVED_FIRST_SEGMENTS.has(owner.toLowerCase())) return;
+    const key = `${owner}/${name}`.toLowerCase();
+    if (!seen.has(key)) {
+      seen.add(key);
+      refs.push({ owner, name });
+    }
+  };
+
+  const preferredPatterns = [
     /<h3\b[^>]*>[\s\S]{0,1600}?<a\b[^>]*href="\/([^"\/?#]+)\/([^"\/?#]+)"/gi,
     /<a\b[^>]*class="[^"]*Link--primary[^"]*"[^>]*href="\/([^"\/?#]+)\/([^"\/?#]+)"/gi,
   ];
+  for (const pattern of preferredPatterns) {
+    for (const match of html.matchAll(pattern)) add(match[1], match[2]);
+    if (refs.length) return refs;
+  }
 
-  for (const pattern of patterns) {
-    for (const match of html.matchAll(pattern)) {
-      const owner = decodeHtml(match[1]);
-      const name = decodeHtml(match[2]);
-      const key = `${owner}/${name}`.toLowerCase();
-      if (!seen.has(key)) {
-        seen.add(key);
-        refs.push({ owner, name });
-      }
-    }
-    if (refs.length) break;
+  // GitHub's star-list markup is still in public preview and has changed before.
+  // Fall back to every two-segment GitHub path; the REST metadata lookup below
+  // validates which candidates are real repositories before they are published.
+  for (const match of html.matchAll(/href="\/([^"\/?#]+)\/([^"\/?#]+)(?:[?#][^"]*)?"/gi)) {
+    add(match[1], match[2]);
   }
   return refs;
 }
@@ -45,7 +59,7 @@ function extractNextPage(html, currentUrl) {
   return href ? new URL(decodeHtml(href), currentUrl).href : null;
 }
 
-async function fetchText(url, options = {}) {
+async function fetchResponse(url, options = {}) {
   const response = await fetch(url, {
     redirect: 'follow',
     headers: {
@@ -53,6 +67,11 @@ async function fetchText(url, options = {}) {
       ...options.headers,
     },
   });
+  return response;
+}
+
+async function fetchText(url, options = {}) {
+  const response = await fetchResponse(url, options);
   if (!response.ok) throw new Error(`${response.status} ${response.statusText} for ${url}`);
   return response.text();
 }
@@ -65,7 +84,7 @@ async function fetchFeaturedRefs() {
   for (let page = 0; page < MAX_PAGES && url; page += 1) {
     const html = await fetchText(url);
     const pageRefs = extractRepoRefs(html);
-    if (!pageRefs.length) throw new Error(`Could not find repositories on ${url}`);
+    if (!pageRefs.length) throw new Error(`Could not find repository candidates on ${url}`);
 
     for (const ref of pageRefs) {
       const key = `${ref.owner}/${ref.name}`.toLowerCase();
@@ -89,26 +108,19 @@ async function fetchRepoMetadata(ref) {
   };
   if (token) headers.Authorization = `Bearer ${token}`;
 
-  try {
-    const text = await fetchText(`https://api.github.com/repos/${encodeURIComponent(ref.owner)}/${encodeURIComponent(ref.name)}`, { headers });
-    const repo = JSON.parse(text);
-    return {
-      owner: repo.owner?.login || ref.owner,
-      name: repo.name || ref.name,
-      url: repo.html_url || `https://github.com/${ref.owner}/${ref.name}`,
-      language: repo.language || '',
-      description: repo.description || 'GitHub repository.',
-    };
-  } catch (error) {
-    console.warn(`Featured-project metadata lookup failed for ${ref.owner}/${ref.name}: ${error.message}`);
-    return {
-      owner: ref.owner,
-      name: ref.name,
-      url: `https://github.com/${ref.owner}/${ref.name}`,
-      language: '',
-      description: 'GitHub repository.',
-    };
-  }
+  const url = `https://api.github.com/repos/${encodeURIComponent(ref.owner)}/${encodeURIComponent(ref.name)}`;
+  const response = await fetchResponse(url, { headers });
+  if (response.status === 404) return null;
+  if (!response.ok) throw new Error(`${response.status} ${response.statusText} for ${url}`);
+
+  const repo = await response.json();
+  return {
+    owner: repo.owner?.login || ref.owner,
+    name: repo.name || ref.name,
+    url: repo.html_url || `https://github.com/${ref.owner}/${ref.name}`,
+    language: repo.language || '',
+    description: repo.description || 'GitHub repository.',
+  };
 }
 
 async function loadFallback() {
@@ -121,7 +133,9 @@ async function loadFallback() {
 export async function syncFeaturedProjects() {
   try {
     const refs = await fetchFeaturedRefs();
-    const projects = await Promise.all(refs.map(fetchRepoMetadata));
+    const metadata = await Promise.all(refs.map(fetchRepoMetadata));
+    const projects = metadata.filter(Boolean);
+    if (!projects.length) throw new Error(`No repositories from ${LIST_URL} passed GitHub API validation`);
     await writeFile(OUTPUT_PATH, `${JSON.stringify(projects, null, 2)}\n`);
     console.log(`Synced ${projects.length} featured projects from ${LIST_URL}`);
     return projects;
