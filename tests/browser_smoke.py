@@ -144,6 +144,13 @@ def main():
                 "getComputedStyle(document.querySelector('.about-contact'),'::before').backgroundImage"
             )
 
+            # About clearly declares the project license and links to source + full license.
+            assert "MIT License" in page.locator(".about-source").inner_text()
+            source_links = page.locator(".about-source-links a")
+            assert source_links.count() == 2
+            assert source_links.nth(0).get_attribute("href") == "https://github.com/dwightmulcahy/password-lab"
+            assert source_links.nth(1).get_attribute("href") == "https://github.com/dwightmulcahy/password-lab/blob/main/LICENSE"
+
             build_meta = page.locator('#buildMeta').inner_text()
             assert 'Build' in build_meta
             browser.close()
