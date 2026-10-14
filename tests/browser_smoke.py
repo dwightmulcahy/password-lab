@@ -90,7 +90,17 @@ def main():
             assert score_group.locator("#scoreText").count() == 1
             assert score_group.locator("#scoreWhy").count() == 1
 
-            page.locator('.lang-btn[data-lang="es"]').click()
+            # Language selection is a dropdown in the upper-right corner of the header.
+            language_select = page.locator("#mobileLanguageSelect")
+            assert language_select.is_visible()
+            assert not page.locator(".language-toggle").is_visible()
+            language_box = language_select.bounding_box()
+            header_box = page.locator("header.wrap").bounding_box()
+            title_box = page.locator("h1").bounding_box()
+            assert language_box and header_box and title_box
+            assert language_box["x"] > header_box["x"] + header_box["width"] / 2
+            assert language_box["y"] < title_box["y"]
+            language_select.select_option("es")
             assert page.locator("html").get_attribute("lang") == "es"
             assert "Prueba" in page.locator('label[for="password"]').inner_text()
             assert page.locator("#calculatePassword").inner_text() == "Calcular"
