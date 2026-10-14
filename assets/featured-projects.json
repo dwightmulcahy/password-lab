@@ -1,0 +1,58 @@
+[
+  {
+    "owner": "dwightmulcahy",
+    "name": "noip-bot",
+    "url": "https://github.com/dwightmulcahy/noip-bot",
+    "language": "Python",
+    "description": "Auto renew noip free domains. Takes care of the code challenge and adjusts on when to scan for needs renewal."
+  },
+  {
+    "owner": "dwightmulcahy",
+    "name": "hvac-dashboard",
+    "url": "https://github.com/dwightmulcahy/hvac-dashboard",
+    "language": "Python",
+    "description": "A self-hosted web dashboard for controlling and monitoring Innovair mini-split AC units via SMLIGHT SLWF-01pro ESPHome dongles running the Midea protocol."
+  },
+  {
+    "owner": "dwightmulcahy",
+    "name": "TapListBuilder",
+    "url": "https://github.com/dwightmulcahy/TapListBuilder",
+    "language": "JavaScript",
+    "description": "Creates printable Tap List Menus in full page and 4x6 menu displays. Optionally will translate the English menus to Spanish in one click."
+  },
+  {
+    "owner": "dwightmulcahy",
+    "name": "git-suggest-version",
+    "url": "https://github.com/dwightmulcahy/git-suggest-version",
+    "language": "Shell",
+    "description": "A lightweight Bash script that calculates the next Semantic Version tag based on your choice of bump type."
+  },
+  {
+    "owner": "dwightmulcahy",
+    "name": "PeakHODLer",
+    "url": "https://github.com/dwightmulcahy/PeakHODLer",
+    "language": "Python",
+    "description": "A macOS menubar application to display the CoinGlass BTC Bull Market Peak Indicator."
+  },
+  {
+    "owner": "dwightmulcahy",
+    "name": "NMController_web",
+    "url": "https://github.com/dwightmulcahy/NMController_web",
+    "language": "Python",
+    "description": "Something like a LAN centralized monitoring server."
+  },
+  {
+    "owner": "dwightmulcahy",
+    "name": "healthchecker.server",
+    "url": "https://github.com/dwightmulcahy/healthchecker.server",
+    "language": "Python",
+    "description": "Lightweight healthcheck microservice."
+  },
+  {
+    "owner": "dwightmulcahy",
+    "name": "xfinitydatausage",
+    "url": "https://github.com/dwightmulcahy/xfinitydatausage",
+    "language": "Python",
+    "description": "Xfinity Data Usage scraper."
+  }
+]
