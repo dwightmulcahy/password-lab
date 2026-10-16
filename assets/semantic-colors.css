@@ -135,6 +135,127 @@ body{
 .about-icon-email,.about-icon-linkedin,.about-icon-book{color:var(--semantic-info)}
 .about-icon-github{color:var(--semantic-analysis)}
 
+/* Brighter layered surfaces keep the dark security theme without making every panel navy-on-navy. */
+:root{
+  --bg:#071827;
+  --panel:#102b45;
+  --panel2:#173a59;
+  --line:#355674;
+  --muted:#b7c7d9;
+  --shadow:0 18px 48px rgba(0,5,14,.28);
+}
+body{
+  background:
+    radial-gradient(circle at 9% 0%,rgba(34,211,238,.19),transparent 32rem),
+    radial-gradient(circle at 92% 5%,rgba(59,130,246,.23),transparent 38rem),
+    radial-gradient(circle at 78% 65%,rgba(167,139,250,.11),transparent 34rem),
+    linear-gradient(155deg,#071827 0%,#0a2035 46%,#091a2c 100%);
+}
+header.wrap::after{
+  content:"";
+  display:block;
+  width:min(520px,70%);
+  height:2px;
+  margin-top:22px;
+  background:linear-gradient(90deg,var(--semantic-action),var(--semantic-action-2),var(--semantic-analysis),transparent);
+  opacity:.72;
+}
+h1{
+  color:#fff;
+  text-shadow:0 8px 34px rgba(56,189,248,.10);
+}
+.eyebrow{
+  border-color:rgba(34,211,238,.34);
+  color:#d9f9ff;
+  background:linear-gradient(90deg,rgba(34,211,238,.10),rgba(59,130,246,.08));
+}
+.lede{color:#c0d0e2}
+.card{
+  background:linear-gradient(155deg,rgba(23,58,89,.97),rgba(13,35,58,.98) 58%,rgba(10,28,48,.98));
+  border-color:rgba(69,105,139,.78);
+  box-shadow:var(--shadow),inset 0 1px 0 rgba(255,255,255,.025);
+}
+.hero-card{
+  background:linear-gradient(150deg,rgba(20,63,92,.98),rgba(14,39,65,.98) 58%,rgba(10,30,51,.98));
+}
+.scenario-card{
+  background:linear-gradient(155deg,rgba(18,67,91,.98),rgba(12,42,66,.98) 62%,rgba(10,31,52,.98));
+}
+.detected-card{
+  background:linear-gradient(155deg,rgba(45,47,92,.96),rgba(25,42,72,.98) 58%,rgba(13,31,53,.98));
+}
+.privacy-faq{
+  background:linear-gradient(155deg,rgba(20,67,66,.95),rgba(15,46,62,.98) 58%,rgba(12,32,51,.98));
+}
+.about-intro{
+  background:linear-gradient(155deg,rgba(18,61,88,.97),rgba(14,38,64,.98));
+}
+.about-career{
+  background:linear-gradient(155deg,rgba(46,44,88,.95),rgba(20,37,64,.98));
+}
+.about-source{
+  background:linear-gradient(155deg,rgba(18,65,66,.94),rgba(15,39,61,.98));
+}
+.about-contact{
+  background:linear-gradient(155deg,rgba(27,55,91,.98),rgba(18,39,67,.98) 54%,rgba(26,37,69,.98));
+  border-color:rgba(81,111,153,.78);
+}
+.about-contact-card{
+  background:linear-gradient(145deg,rgba(17,40,65,.88),rgba(9,26,45,.84));
+  border-color:rgba(72,101,137,.66);
+}
+.password-row{
+  background:rgba(3,18,32,.78);
+  border-color:#3a5e7f;
+  box-shadow:inset 0 1px 12px rgba(0,0,0,.18),0 0 0 1px rgba(56,189,248,.025);
+}
+.generator-panel{
+  background:linear-gradient(135deg,rgba(56,189,248,.075),rgba(167,139,250,.055));
+  border-color:rgba(77,113,149,.70);
+}
+.tabs{
+  background:linear-gradient(135deg,rgba(18,52,80,.90),rgba(19,39,69,.90));
+  border-color:rgba(73,111,147,.72);
+  box-shadow:0 8px 22px rgba(0,8,18,.16);
+}
+button:not(.calculate-password):not(.modal-primary){
+  background:#1b3b5c;
+  border-color:#355c82;
+}
+button:not(.calculate-password):not(.modal-primary):hover{
+  background:#244b72;
+  border-color:#4c79a3;
+}
+.stats{
+  background:linear-gradient(90deg,rgba(56,189,248,.045),rgba(167,139,250,.045));
+}
+.stat:nth-child(1){box-shadow:inset 0 -2px 0 rgba(56,189,248,.50)}
+.stat:nth-child(2){box-shadow:inset 0 -2px 0 rgba(167,139,250,.50)}
+.stat:nth-child(3){box-shadow:inset 0 -2px 0 rgba(96,165,250,.42)}
+.stat:nth-child(4){box-shadow:inset 0 -2px 0 rgba(167,139,250,.42)}
+.pattern{
+  background:linear-gradient(90deg,rgba(167,139,250,.055),rgba(255,255,255,.025));
+  border-color:rgba(75,101,139,.70);
+}
+.network-trust{
+  border-color:rgba(67,108,145,.74);
+  border-left-color:rgba(56,189,248,.82);
+  background:linear-gradient(90deg,rgba(56,189,248,.10),rgba(14,38,61,.62) 28%,rgba(7,25,42,.58));
+}
+.page-bottom-network{margin-top:20px}
+footer.wrap{
+  border-top:1px solid rgba(70,107,143,.55);
+  margin-top:18px;
+}
+.site-logo{
+  filter:drop-shadow(0 12px 28px rgba(34,211,238,.15)) drop-shadow(0 4px 12px rgba(0,0,0,.28));
+}
+
+@media(max-width:760px){
+  header.wrap::after{width:100%}
+  .stat:nth-child(n){box-shadow:none}
+}
+
 @media (prefers-reduced-motion:no-preference){
   .hero-card.semantic-danger,.hero-card.semantic-caution,.hero-card.semantic-warning,.hero-card.semantic-info,.hero-card.semantic-success{transition-duration:.25s}
 }
