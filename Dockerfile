@@ -3,7 +3,7 @@ WORKDIR /app
 ARG BUILD_SHA=local
 ARG BUILD_DATE=unknown
 ARG BUILD_VERSION=dev
-ARG PUBLIC_SITE_URL=http://localhost:8080
+ARG PUBLIC_SITE_URL=https://passwordlab.dwights.dev
 ENV BUILD_SHA=${BUILD_SHA} \
     BUILD_DATE=${BUILD_DATE} \
     BUILD_VERSION=${BUILD_VERSION} \
