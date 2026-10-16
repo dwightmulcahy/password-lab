@@ -9,14 +9,14 @@ export function injectBrand(html) {
   if (!html.includes('rel="icon"')) {
     html = html.replace(
       '</head>',
-      '  <link rel="icon" type="image/svg+xml" href="assets/password-lab-logo.svg">\n</head>'
+      '  <link rel="icon" type="image/png" href="assets/password-lab-logo.png">\n</head>'
     );
   }
 
   if (!html.includes('class="site-brand"')) {
     html = html.replace(
       /(<h1><span data-i18n="title">Password Strength Lab<\/span>[\s\S]*?<\/h1>)/,
-      '<div class="site-brand">\n      <img class="site-logo" src="assets/password-lab-logo.svg" width="86" height="86" alt="Password Strength Lab logo">\n      $1\n    </div>'
+      '<div class="site-brand">\n      <img class="site-logo" src="assets/password-lab-logo.png" width="86" height="86" alt="Password Strength Lab logo">\n      $1\n    </div>'
     );
   }
 
