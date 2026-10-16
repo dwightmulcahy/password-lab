@@ -5,6 +5,7 @@ import { injectPassphraseGenerator } from './build-web-passphrase.mjs';
 import { injectLayoutEnhancements } from './build-web-layout.mjs';
 import { injectAbout } from './build-web-about.mjs';
 import { injectPrivacyEnhancements } from './build-web-privacy.mjs';
+import { injectSeo } from './build-web-seo.mjs';
 
 function localGitSha() {
   try {
@@ -19,7 +20,7 @@ const buildDate = process.env.BUILD_DATE && process.env.BUILD_DATE !== 'unknown'
   ? process.env.BUILD_DATE
   : new Date().toISOString();
 const buildVersion = process.env.BUILD_VERSION || 'dev';
-const publicSiteUrl = (process.env.PUBLIC_SITE_URL || 'http://localhost:8080').replace(/\/$/, '');
+const publicSiteUrl = (process.env.PUBLIC_SITE_URL || 'https://passwordlab.dwights.dev').replace(/\/$/, '');
 
 await rm('dist', { recursive: true, force: true });
 await mkdir('dist/assets', { recursive: true });
@@ -51,6 +52,7 @@ html = html
     '<h1 data-i18n="title">Password Strength Lab</h1>',
     `<h1><span data-i18n="title">Password Strength Lab</span> <span id="versionBadge" class="version-badge">${buildVersion}</span></h1>`
   );
+html = injectSeo(html, publicSiteUrl);
 html = injectPassphraseGenerator(html);
 html = injectAbout(html);
 html = injectPrivacyEnhancements(html);
