@@ -1,4 +1,4 @@
-name: Publish Docker image
+name: Release
 
 on:
   push:
@@ -9,7 +9,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: publish-${{ github.ref }}
+  group: release-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -33,20 +33,11 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Check JavaScript syntax
         run: |
-          node --check assets/app.js
-          node --check assets/i18n.js
-          node --check assets/attack-rates.js
-          node --check assets/passphrase-generator.js
-          node --check assets/about.js
-          node --check src/zxcvbn-entry.js
-          node --check tools/build-web.mjs
-          node --check tools/build-web-passphrase.mjs
-          node --check tools/build-web-layout.mjs
-          node --check tools/build-web-about.mjs
-          node --check tools/build-web-brand.mjs
-          node --check tools/sync-featured-projects.mjs
-      - name: Validate QNAP Compose
+          find assets src tools -type f \( -name '*.js' -o -name '*.mjs' \) -print0 \
+            | xargs -0 -n1 node --check
+      - name: Validate Compose files
         run: |
+          docker compose -f docker-compose.yml config > /tmp/password-lab-local.yml
           docker compose -f docker-compose.qnap.yml config > /tmp/password-lab-qnap.yml
           grep -q '127.0.0.1' /tmp/password-lab-qnap.yml
           grep -q '18081' /tmp/password-lab-qnap.yml
@@ -60,6 +51,9 @@ jobs:
           python -m pip install pytest
           pytest -q tests/test_*.py
       - name: Build offline edition
+        env:
+          FEATURED_PROJECTS_REQUIRE_LIVE: '1'
+          GITHUB_TOKEN: ${{ github.token }}
         run: BUILD_VERSION="${GITHUB_REF_NAME}" npm run build:offline
       - name: Build release candidate image
         run: docker build --build-arg BUILD_SHA="${GITHUB_SHA::12}" --build-arg BUILD_DATE="$(date -u +%FT%TZ)" --build-arg BUILD_VERSION="${GITHUB_REF_NAME}" -t password-lab:release-candidate .
@@ -140,3 +134,42 @@ jobs:
             BUILD_VERSION=${{ github.ref_name }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  github-release:
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+      - name: Install build dependencies
+        run: npm install --no-audit --no-fund
+      - name: Build offline release asset
+        env:
+          FEATURED_PROJECTS_REQUIRE_LIVE: '1'
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          BUILD_SHA="${GITHUB_SHA::12}" BUILD_DATE="$(date -u +%FT%TZ)" BUILD_VERSION="${GITHUB_REF_NAME}" npm run build:offline
+          cd offline
+          zip -qr "../password-lab-${GITHUB_REF_NAME}-offline.zip" .
+          cd ..
+          sha256sum "password-lab-${GITHUB_REF_NAME}-offline.zip" > "password-lab-${GITHUB_REF_NAME}-offline.zip.sha256"
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          asset="password-lab-${GITHUB_REF_NAME}-offline.zip"
+          checksum="${asset}.sha256"
+          title="Password Strength Lab ${GITHUB_REF_NAME}"
+          if gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" "$asset" "$checksum" --clobber --repo "$GITHUB_REPOSITORY"
+          else
+            gh release create "$GITHUB_REF_NAME" "$asset" "$checksum" \
+              --verify-tag \
+              --generate-notes \
+              --title "$title" \
+              --repo "$GITHUB_REPOSITORY"
+          fi
