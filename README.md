@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/password-lab-logo.svg" alt="Password Strength Lab logo" width="180">
+</p>
+
 # Password Strength Lab
 
 A browser-based password-strength and attack-scenario estimator built around zxcvbn-ts.
@@ -100,14 +104,17 @@ Precedence is URL parameter → saved preference → browser language → Englis
 assets/
   app.js                    application logic
   attack-rates.js           attack-rate assumptions
+  brand.css                 logo/header presentation
   featured-projects.json    build-time GitHub Featured-list snapshot
   i18n.js                   translations
+  password-lab-logo.svg     site logo and favicon artwork
   privacy-ui.js             browser-local privacy copy and runtime labels
   styles.css                UI styles
 src/
   zxcvbn-entry.js            pinned local zxcvbn entry
 tools/
   build-web.mjs              production bundle builder
+  build-web-brand.mjs        logo/favicon build injection
   build-web-privacy.mjs      privacy FAQ/build injection
   build-offline.mjs          offline bundle builder
   sync-featured-projects.mjs GitHub Featured-list build sync
@@ -129,6 +136,7 @@ node --check assets/i18n.js
 node --check assets/attack-rates.js
 node --check assets/about.js
 node --check assets/privacy-ui.js
+node --check tools/build-web-brand.mjs
 node --check tools/build-web-privacy.mjs
 node --check tools/sync-featured-projects.mjs
 node --check src/zxcvbn-entry.js
