@@ -7,6 +7,7 @@ import { injectAbout } from './build-web-about.mjs';
 import { injectPrivacyEnhancements } from './build-web-privacy.mjs';
 import { injectSeo } from './build-web-seo.mjs';
 import { injectBrand } from './build-web-brand.mjs';
+import { injectSemanticColors } from './build-web-semantic-colors.mjs';
 
 function localGitSha() {
   try {
@@ -60,6 +61,7 @@ html = injectPassphraseGenerator(html);
 html = injectAbout(html);
 html = injectPrivacyEnhancements(html);
 html = injectLayoutEnhancements(html);
+html = injectSemanticColors(html);
 
 if (!html.includes('id="buildMeta"')) {
   html = html.replace('</footer>', `  <div id="buildMeta" class="build-meta">Build <code>${buildSha}</code> • ${buildDate}</div>\n  </footer>`);
