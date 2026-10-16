@@ -43,6 +43,7 @@ jobs:
           node --check tools/build-web-passphrase.mjs
           node --check tools/build-web-layout.mjs
           node --check tools/build-web-about.mjs
+          node --check tools/build-web-brand.mjs
           node --check tools/sync-featured-projects.mjs
       - name: Validate QNAP Compose
         run: |
