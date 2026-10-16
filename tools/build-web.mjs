@@ -6,6 +6,7 @@ import { injectLayoutEnhancements } from './build-web-layout.mjs';
 import { injectAbout } from './build-web-about.mjs';
 import { injectPrivacyEnhancements } from './build-web-privacy.mjs';
 import { injectSeo } from './build-web-seo.mjs';
+import { injectBrand } from './build-web-brand.mjs';
 
 function localGitSha() {
   try {
@@ -54,6 +55,7 @@ html = html
     `<h1><span data-i18n="title">Password Strength Lab</span> <span id="versionBadge" class="version-badge">${buildVersion}</span></h1>`
   );
 html = injectSeo(html, publicSiteUrl);
+html = injectBrand(html);
 html = injectPassphraseGenerator(html);
 html = injectAbout(html);
 html = injectPrivacyEnhancements(html);
