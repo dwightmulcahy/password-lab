@@ -7,6 +7,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   validate:
     runs-on: ubuntu-latest
@@ -22,17 +26,11 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Check JavaScript syntax
         run: |
-          node --check assets/app.js
-          node --check assets/i18n.js
-          node --check assets/attack-rates.js
-          node --check assets/about.js
-          node --check src/zxcvbn-entry.js
-          node --check tools/build-web.mjs
-          node --check tools/build-web-about.mjs
-          node --check tools/build-web-brand.mjs
-          node --check tools/sync-featured-projects.mjs
-      - name: Validate QNAP Compose
+          find assets src tools -type f \( -name '*.js' -o -name '*.mjs' \) -print0 \
+            | xargs -0 -n1 node --check
+      - name: Validate Compose files
         run: |
+          docker compose -f docker-compose.yml config > /tmp/password-lab-local.yml
           docker compose -f docker-compose.qnap.yml config > /tmp/password-lab-qnap.yml
           grep -q '127.0.0.1' /tmp/password-lab-qnap.yml
           grep -q '18081' /tmp/password-lab-qnap.yml
@@ -46,6 +44,9 @@ jobs:
           python -m pip install pytest
           pytest -q tests/test_*.py
       - name: Build offline edition
+        env:
+          FEATURED_PROJECTS_REQUIRE_LIVE: '1'
+          GITHUB_TOKEN: ${{ github.token }}
         run: BUILD_VERSION="ci" npm run build:offline
       - name: Build hardened Docker image
         run: docker build --build-arg BUILD_SHA="${GITHUB_SHA::12}" --build-arg BUILD_DATE="$(date -u +%FT%TZ)" --build-arg BUILD_VERSION="ci" -t password-lab:ci .
