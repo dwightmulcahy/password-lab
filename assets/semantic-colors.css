@@ -45,7 +45,7 @@ body{
 }
 #mobileLanguageSelect:focus-visible,.language-select:focus-visible{outline-color:var(--semantic-action)}
 
-/* Information = blue, analysis = purple. */
+/* Information = blue, analysis = purple, privacy/trust = green. */
 .scenario-card{
   border-top:3px solid rgba(56,189,248,.72);
   box-shadow:var(--shadow),0 0 30px rgba(56,189,248,.045);
@@ -53,6 +53,15 @@ body{
 .detected-card{
   border-top:3px solid rgba(167,139,250,.72);
   box-shadow:var(--shadow),0 0 30px rgba(167,139,250,.045);
+  transition:border-color .22s ease,box-shadow .22s ease;
+}
+.detected-card.semantic-danger{
+  border-top-color:rgba(255,93,115,.90);
+  box-shadow:var(--shadow),0 0 34px rgba(255,93,115,.10);
+}
+.detected-card.semantic-success{
+  border-top-color:rgba(52,211,153,.82);
+  box-shadow:var(--shadow),0 0 34px rgba(52,211,153,.08);
 }
 .privacy-faq{
   border-top:3px solid rgba(52,211,153,.72);
@@ -81,6 +90,7 @@ body{
 .hero-card.semantic-warning{border-color:rgba(246,196,83,.44);box-shadow:var(--shadow),0 0 34px rgba(246,196,83,.07)}
 .hero-card.semantic-info{border-color:rgba(56,189,248,.44);box-shadow:var(--shadow),0 0 34px rgba(56,189,248,.07)}
 .hero-card.semantic-success{border-color:rgba(52,211,153,.48);box-shadow:var(--shadow),0 0 36px rgba(52,211,153,.08)}
+.hero-card.semantic-pending{border-color:rgba(246,196,83,.32)}
 .hero-card.semantic-breached{border-color:rgba(255,93,115,.78);box-shadow:var(--shadow),0 0 42px rgba(255,93,115,.15)}
 
 #strengthLabel.semantic-danger{color:var(--semantic-danger)!important}
