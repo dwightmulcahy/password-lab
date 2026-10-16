@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/password-lab-logo.png" alt="Password Strength Lab logo" width="180">
+  <img src="https://raw.githubusercontent.com/dwightmulcahy/password-lab/main/assets/password-lab-logo.png" alt="Password Strength Lab logo" width="180">
 </p>
 
 # Password Strength Lab
