@@ -21,6 +21,7 @@ const buildDate = process.env.BUILD_DATE && process.env.BUILD_DATE !== 'unknown'
   : new Date().toISOString();
 const buildVersion = process.env.BUILD_VERSION || 'dev';
 const publicSiteUrl = (process.env.PUBLIC_SITE_URL || 'https://passwordlab.dwights.dev').replace(/\/$/, '');
+const canonicalUrl = `${publicSiteUrl}/`;
 
 await rm('dist', { recursive: true, force: true });
 await mkdir('dist/assets', { recursive: true });
@@ -62,6 +63,11 @@ if (!html.includes('id="buildMeta"')) {
   html = html.replace('</footer>', `  <div id="buildMeta" class="build-meta">Build <code>${buildSha}</code> • ${buildDate}</div>\n  </footer>`);
 }
 
+const robots = `User-agent: *\nAllow: /\n\nSitemap: ${canonicalUrl}sitemap.xml\n`;
+const sitemap = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url>\n    <loc>${canonicalUrl}</loc>\n  </url>\n</urlset>\n`;
+
 await writeFile('dist/index.html', html);
+await writeFile('dist/robots.txt', robots);
+await writeFile('dist/sitemap.xml', sitemap);
 await writeFile('dist/build-info.json', `${JSON.stringify({ build_sha: buildSha, build_date: buildDate, version: buildVersion, site_url: publicSiteUrl })}\n`);
 console.log(`Web build written to dist/ (version ${buildVersion}, build ${buildSha}, site ${publicSiteUrl})`);
