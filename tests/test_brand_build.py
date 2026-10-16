@@ -20,7 +20,10 @@ def test_logo_and_favicon_are_built():
 
 def test_readme_uses_project_logo():
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
-    assert '<img src="assets/password-lab-logo.png" alt="Password Strength Lab logo" width="180">' in readme
+    assert (
+        '<img src="https://raw.githubusercontent.com/dwightmulcahy/password-lab/main/assets/password-lab-logo.png" '
+        'alt="Password Strength Lab logo" width="180">'
+    ) in readme
 
 
 def test_old_recreated_svg_is_not_used():
