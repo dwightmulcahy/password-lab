@@ -15,10 +15,22 @@ concurrency:
 jobs:
   validate:
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
     steps:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
+      - name: Validate stable semantic-version tag
+        id: version
+        shell: bash
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Release tags must be M.m.p or vM.m.p; got: $GITHUB_REF_NAME" >&2
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
       - name: Require tagged commit to be on main
         run: |
           git fetch origin main
@@ -31,10 +43,21 @@ jobs:
           python-version: '3.12'
       - name: Install build dependencies
         run: npm install --no-audit --no-fund
+      - name: Install Python quality and test tools
+        run: python -m pip install --disable-pip-version-check pytest ruff pyflakes
       - name: Check JavaScript syntax
         run: |
           find assets src tools -type f \( -name '*.js' -o -name '*.mjs' \) -print0 \
             | xargs -0 -n1 node --check
+      - name: Ruff / Pyflakes gate
+        run: |
+          ruff check .
+          find . -type f -name '*.py' \
+            -not -path './.git/*' \
+            -not -path './node_modules/*' \
+            -not -path './dist/*' \
+            -not -path './offline/*' \
+            -print0 | xargs -0 pyflakes
       - name: Validate Compose files
         run: |
           docker compose -f docker-compose.yml config > /tmp/password-lab-local.yml
@@ -45,18 +68,16 @@ jobs:
         env:
           FEATURED_PROJECTS_REQUIRE_LIVE: '1'
           GITHUB_TOKEN: ${{ github.token }}
-        run: BUILD_SHA="${GITHUB_SHA::12}" BUILD_DATE="$(date -u +%FT%TZ)" BUILD_VERSION="${GITHUB_REF_NAME}" npm run build:web
-      - name: Run regression tests
-        run: |
-          python -m pip install pytest
-          pytest -q tests/test_*.py
+        run: BUILD_SHA="${GITHUB_SHA::12}" BUILD_DATE="$(date -u +%FT%TZ)" BUILD_VERSION="${{ steps.version.outputs.version }}" npm run build:web
+      - name: Run all pytest tests
+        run: pytest -q
       - name: Build offline edition
         env:
           FEATURED_PROJECTS_REQUIRE_LIVE: '1'
           GITHUB_TOKEN: ${{ github.token }}
-        run: BUILD_VERSION="${GITHUB_REF_NAME}" npm run build:offline
+        run: BUILD_VERSION="${{ steps.version.outputs.version }}" npm run build:offline
       - name: Build release candidate image
-        run: docker build --build-arg BUILD_SHA="${GITHUB_SHA::12}" --build-arg BUILD_DATE="$(date -u +%FT%TZ)" --build-arg BUILD_VERSION="${GITHUB_REF_NAME}" -t password-lab:release-candidate .
+        run: docker build --build-arg BUILD_SHA="${GITHUB_SHA::12}" --build-arg BUILD_DATE="$(date -u +%FT%TZ)" --build-arg BUILD_VERSION="${{ steps.version.outputs.version }}" -t password-lab:release-candidate .
       - name: Start release candidate image
         run: docker run -d --rm --name password-lab-release -p 18080:8080 --read-only --tmpfs /tmp:size=16m --tmpfs /var/cache/nginx:size=16m --cap-drop ALL --security-opt no-new-privileges password-lab:release-candidate
       - name: Verify health endpoint
@@ -111,15 +132,19 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: dwightmulcahy/password-lab
+          flavor: |
+            latest=false
           tags: |
-            type=ref,event=tag
+            type=semver,pattern={{major}},value=${{ needs.validate.outputs.version }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ needs.validate.outputs.version }}
+            type=semver,pattern={{version}},value=${{ needs.validate.outputs.version }}
             type=raw,value=latest
           labels: |
             org.opencontainers.image.title=Password Strength Lab
             org.opencontainers.image.description=Browser-based password strength and attack-scenario estimator
             org.opencontainers.image.source=https://github.com/dwightmulcahy/password-lab
             org.opencontainers.image.revision=${{ github.sha }}
-            org.opencontainers.image.version=${{ github.ref_name }}
+            org.opencontainers.image.version=${{ needs.validate.outputs.version }}
       - name: Build and push multi-architecture image
         uses: docker/build-push-action@v6
         with:
@@ -131,17 +156,19 @@ jobs:
           build-args: |
             BUILD_SHA=${{ github.sha }}
             BUILD_DATE=${{ steps.build_date.outputs.value }}
-            BUILD_VERSION=${{ github.ref_name }}
+            BUILD_VERSION=${{ needs.validate.outputs.version }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
   github-release:
-    needs: publish
+    needs: [validate, publish]
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v7
         with:
           node-version: '22'
@@ -152,24 +179,34 @@ jobs:
           FEATURED_PROJECTS_REQUIRE_LIVE: '1'
           GITHUB_TOKEN: ${{ github.token }}
         run: |
-          BUILD_SHA="${GITHUB_SHA::12}" BUILD_DATE="$(date -u +%FT%TZ)" BUILD_VERSION="${GITHUB_REF_NAME}" npm run build:offline
+          version="${{ needs.validate.outputs.version }}"
+          BUILD_SHA="${GITHUB_SHA::12}" BUILD_DATE="$(date -u +%FT%TZ)" BUILD_VERSION="$version" npm run build:offline
           cd offline
-          zip -qr "../password-lab-${GITHUB_REF_NAME}-offline.zip" .
+          zip -qr "../password-lab-${version}-offline.zip" .
           cd ..
-          sha256sum "password-lab-${GITHUB_REF_NAME}-offline.zip" > "password-lab-${GITHUB_REF_NAME}-offline.zip.sha256"
+          sha256sum "password-lab-${version}-offline.zip" > "password-lab-${version}-offline.zip.sha256"
+      - name: Generate grouped conventional-commit release notes
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: node tools/release-notes.mjs "$GITHUB_REF_NAME" release-notes.md
       - name: Publish GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
+          RELEASE_VERSION: ${{ needs.validate.outputs.version }}
         run: |
-          asset="password-lab-${GITHUB_REF_NAME}-offline.zip"
+          asset="password-lab-${RELEASE_VERSION}-offline.zip"
           checksum="${asset}.sha256"
-          title="Password Strength Lab ${GITHUB_REF_NAME}"
+          title="Password Strength Lab ${RELEASE_VERSION}"
           if gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release edit "$GITHUB_REF_NAME" \
+              --title "$title" \
+              --notes-file release-notes.md \
+              --repo "$GITHUB_REPOSITORY"
             gh release upload "$GITHUB_REF_NAME" "$asset" "$checksum" --clobber --repo "$GITHUB_REPOSITORY"
           else
             gh release create "$GITHUB_REF_NAME" "$asset" "$checksum" \
               --verify-tag \
-              --generate-notes \
+              --notes-file release-notes.md \
               --title "$title" \
               --repo "$GITHUB_REPOSITORY"
           fi
