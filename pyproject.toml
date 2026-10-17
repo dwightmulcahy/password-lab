@@ -1,0 +1,13 @@
+[tool.ruff]
+target-version = "py312"
+exclude = [
+  ".git",
+  "node_modules",
+  "dist",
+  "offline",
+]
+
+[tool.ruff.lint]
+# Keep Ruff focused on Pyflakes-class correctness checks. Formatting/style is
+# intentionally not part of the CI gate for this mostly-JavaScript project.
+select = ["F"]
