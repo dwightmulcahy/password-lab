@@ -39,7 +39,7 @@ def test_release_builds_multi_architecture_image():
         ("build-push-action", 6),
     ):
         matches = re.findall(
-            rf"(?m)^\\s*uses:\\s+docker/{re.escape(action)}@v(\\d+)\\s*$",
+            rf"(?m)^[ ]*uses:[ ]+docker/{re.escape(action)}@v([0-9]+)[ ]*$",
             WORKFLOW,
         )
         assert len(matches) == 1, f"Expected exactly one docker/{action} action"
