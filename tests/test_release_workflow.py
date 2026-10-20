@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 
 WORKFLOW = Path(".github/workflows/publish-docker.yml").read_text(encoding="utf-8")
@@ -30,9 +31,20 @@ def test_release_publishes_expected_dockerhub_semver_tags():
 
 
 def test_release_builds_multi_architecture_image():
-    assert "docker/setup-qemu-action@v3" in WORKFLOW
-    assert "docker/setup-buildx-action@v3" in WORKFLOW
-    assert "docker/build-push-action@v6" in WORKFLOW
+    # Dependabot upgrades these actions independently. Verify the required
+    # actions and supported minimum versions, not a frozen major release.
+    for action, minimum_major in (
+        ("setup-qemu-action", 3),
+        ("setup-buildx-action", 3),
+        ("build-push-action", 6),
+    ):
+        matches = re.findall(
+            rf"(?m)^\\s*uses:\\s+docker/{re.escape(action)}@v(\\d+)\\s*$",
+            WORKFLOW,
+        )
+        assert len(matches) == 1, f"Expected exactly one docker/{action} action"
+        assert int(matches[0]) >= minimum_major
+
     assert "platforms: linux/amd64,linux/arm64" in WORKFLOW
     assert "push: true" in WORKFLOW
 
