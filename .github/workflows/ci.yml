@@ -121,19 +121,6 @@ jobs:
           done
           docker logs password-lab-ci
           exit 1
-      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-      - name: Install browser test dependencies
-        run: |
-          python -m pip install playwright
-          python -m playwright install --with-deps chromium
-      - name: Run browser smoke tests against Docker
-        env:
-          PASSWORD_LAB_BASE_URL: http://127.0.0.1:18080
-        run: |
-          python3 tests/browser_smoke.py
-          python3 tests/about_smoke.py
       - name: Scan fixable critical/high image vulnerabilities
         uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
         with:
@@ -144,6 +131,20 @@ jobs:
           scanners: vuln
           vuln-type: os,library
           severity: CRITICAL,HIGH
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install browser test dependencies
+        timeout-minutes: 6
+        run: |
+          python -m pip install playwright
+          python -m playwright install chromium
+      - name: Run browser smoke tests against Docker
+        env:
+          PASSWORD_LAB_BASE_URL: http://127.0.0.1:18080
+        run: |
+          python3 tests/browser_smoke.py
+          python3 tests/about_smoke.py
       - name: Docker logs on failure
         if: failure()
         run: docker logs password-lab-ci || true
