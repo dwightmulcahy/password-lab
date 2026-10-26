@@ -1,92 +1,153 @@
 name: CI
-
 on:
   push:
+    branches: ["**"]
   pull_request:
+  workflow_call:
+  workflow_dispatch:
 
 permissions:
   contents: read
-
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
+  group: ci-${{ github.repository }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
+env:
+  NODE_VERSION: '26'
+  PYTHON_VERSION: '3.12'
+
 jobs:
-  validate:
+  lint:
+    name: JS syntax + Ruff/Pyflakes
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
-          node-version: '22'
-      - uses: actions/setup-python@v5
+          node-version: ${{ env.NODE_VERSION }}
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
         with:
-          python-version: '3.12'
-      - name: Install build dependencies
-        run: npm install --no-audit --no-fund
-      - name: Install Python quality and test tools
-        run: python -m pip install --disable-pip-version-check pytest ruff pyflakes
-      # Bootstrap the generated npm lockfile from GitHub-hosted npm registry access.
-      # This temporary step is removed as soon as the lockfile is committed.
-      - name: Export lockfile for reproducible builds
-        if: github.ref == 'refs/heads/main'
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Check all tracked JavaScript files
         run: |
-          printf '%s\n' 'BEGIN_PACKAGE_LOCK_B64'
-          base64 -w 0 package-lock.json
-          printf '\n%s\n' 'END_PACKAGE_LOCK_B64'
-      - name: Check JavaScript syntax
-        run: |
-          find assets src tools -type f \( -name '*.js' -o -name '*.mjs' \) -print0 \
-            | xargs -0 -n1 node --check
+          set -euo pipefail
+          mapfile -d '' files < <(git ls-files -z -- '*.js' '*.mjs')
+          for f in "${files[@]}"; do node --check "$f"; done
       - name: Ruff / Pyflakes gate
         run: |
-          ruff check .
-          find . -type f -name '*.py' \
-            -not -path './.git/*' \
-            -not -path './node_modules/*' \
-            -not -path './dist/*' \
-            -not -path './offline/*' \
-            -print0 | xargs -0 pyflakes
-      - name: Validate Compose files
+          python -m pip install --disable-pip-version-check ruff pyflakes
+          ruff check . --select F
+          find tests -type f -name '*.py' -print0 | xargs -0 pyflakes
+
+  compose:
+    name: Validate local + QNAP Compose
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Compose config and Hotpot isolation
         run: |
           docker compose -f docker-compose.yml config > /tmp/password-lab-local.yml
           docker compose -f docker-compose.qnap.yml config > /tmp/password-lab-qnap.yml
           grep -q '127.0.0.1' /tmp/password-lab-qnap.yml
           grep -q '18081' /tmp/password-lab-qnap.yml
-      - name: Build local web bundle
+
+  build:
+    name: Build web + offline
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Build web
         env:
           FEATURED_PROJECTS_REQUIRE_LIVE: '1'
           GITHUB_TOKEN: ${{ github.token }}
         run: BUILD_SHA="${GITHUB_SHA::12}" BUILD_DATE="$(date -u +%FT%TZ)" BUILD_VERSION="ci" npm run build:web
-      - name: Run all pytest tests
-        run: pytest -q
-      - name: Build offline edition
+      - name: Build offline
         env:
           FEATURED_PROJECTS_REQUIRE_LIVE: '1'
           GITHUB_TOKEN: ${{ github.token }}
         run: BUILD_VERSION="ci" npm run build:offline
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: website-build
+          path: |
+            dist/
+            offline/
+          retention-days: 7
+
+  test:
+    name: All pytest regression tests
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          name: website-build
+          path: .
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - run: python -m pip install --disable-pip-version-check pytest
+      - name: Run every pytest test
+        run: python -m pytest -q
+
+  docker-smoke:
+    name: Docker, health, browser smoke + Trivy
+    needs: [lint, compose, build, test]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Build hardened Docker image
         run: docker build --build-arg BUILD_SHA="${GITHUB_SHA::12}" --build-arg BUILD_DATE="$(date -u +%FT%TZ)" --build-arg BUILD_VERSION="ci" -t password-lab:ci .
-      - name: Start Docker image
-        run: docker run -d --rm --name password-lab-ci -p 18080:8080 --read-only --tmpfs /tmp:size=16m --tmpfs /var/cache/nginx:size=16m --cap-drop ALL --security-opt no-new-privileges password-lab:ci
+      - name: Start hardened Docker image
+        run: |
+          docker run -d --rm --name password-lab-ci -p 18080:8080 \
+            --read-only --tmpfs /tmp:size=16m --tmpfs /var/cache/nginx:size=16m \
+            --cap-drop ALL --security-opt no-new-privileges \
+            --pids-limit 64 --memory 128m password-lab:ci
       - name: Verify health endpoint
         run: |
-          for i in {1..20}; do
+          for i in {1..30}; do
             if curl -fsS http://127.0.0.1:18080/health | grep -q '"healthy":true'; then exit 0; fi
             sleep 1
           done
           docker logs password-lab-ci
           exit 1
-      - name: Install browser-test dependencies
+      - name: Scan fixable critical/high image vulnerabilities
+        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
+        with:
+          image-ref: password-lab:ci
+          format: table
+          exit-code: '1'
+          ignore-unfixed: true
+          scanners: vuln
+          vuln-type: os,library
+          severity: CRITICAL,HIGH
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install browser test dependencies
+        timeout-minutes: 6
         run: |
           python -m pip install playwright
-          python -m playwright install --with-deps chromium
+          python -m playwright install chromium
       - name: Run browser smoke tests against Docker
         env:
           PASSWORD_LAB_BASE_URL: http://127.0.0.1:18080
         run: |
           python3 tests/browser_smoke.py
           python3 tests/about_smoke.py
+      - name: Docker logs on failure
+        if: failure()
+        run: docker logs password-lab-ci || true
       - name: Stop Docker image
         if: always()
         run: docker rm -f password-lab-ci || true

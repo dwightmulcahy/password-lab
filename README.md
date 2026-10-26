@@ -52,7 +52,7 @@ A committed snapshot is retained as a build fallback if GitHub is temporarily un
 Build the local bundle, then serve the generated `dist/` directory:
 
 ```bash
-npm install
+npm ci
 npm run build:web
 python3 -m http.server 8080 -d dist
 ```
@@ -80,7 +80,7 @@ It returns `{"healthy":true}`. Build metadata is available at `/build-info.json`
 Install the pinned packages and build the offline edition:
 
 ```bash
-npm install
+npm ci
 npm run build:offline
 ```
 
@@ -128,7 +128,7 @@ docker-compose.yml
 ## Validation
 
 ```bash
-npm install
+npm ci
 npm run build:web
 node --check assets/app.js
 node --check assets/i18n.js
@@ -160,8 +160,8 @@ Its read-only container, CPU/PID/memory limits, health checks, and rotating
 10 MB × 3 JSON log files are intentional security measures.
 Copy `.env.example` to `.env` to override deployment settings.
 
-GitHub CI runs quality checks, functional tests, Docker and browser tests, and
-image vulnerability scanning. Release tags are **created manually**. A stable
+GitHub CI runs pinned-action quality gates, all functional tests, Docker and
+browser tests, and Trivy image vulnerability scanning. Release tags are **created manually**. A stable
 `vM.m.p` tag publishes a multiarchitecture Docker Hub image and an offline ZIP
 with SHA-256 checksum and Conventional Commit release notes. Older stable
 releases must not overwrite the major, major.minor, or latest aliases.

@@ -1,152 +1,88 @@
 name: Release
-
 on:
   push:
-    tags:
-      - '*'
+    tags: ['v*.*.*', '[0-9]*.*.*']
 
 permissions:
   contents: read
-
 concurrency:
   group: release-${{ github.ref }}
   cancel-in-progress: false
+env:
+  NODE_VERSION: '26'
 
 jobs:
-  validate:
+  verify:
+    name: Verify manual SemVer tag and ancestry
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.version.outputs.version }}
+      is_latest: ${{ steps.version.outputs.is_latest }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
       - name: Validate stable semantic-version tag
         id: version
         shell: bash
         run: |
+          set -euo pipefail
           version="${GITHUB_REF_NAME#v}"
-          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+          if [[ ! "$version" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
             echo "Release tags must be M.m.p or vM.m.p; got: $GITHUB_REF_NAME" >&2
             exit 1
           fi
           echo "version=$version" >> "$GITHUB_OUTPUT"
+          latest_version="$(git tag --list | sed -nE 's/^v?([0-9]+\.[0-9]+\.[0-9]+)$/\1/p' | sort -V | tail -n 1)"
+          if [[ "$version" == "$latest_version" ]]; then
+            echo "is_latest=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "is_latest=false" >> "$GITHUB_OUTPUT"
+          fi
       - name: Require tagged commit to be on main
         run: |
           git fetch origin main
           git merge-base --is-ancestor "$GITHUB_SHA" origin/main
-      - uses: actions/setup-node@v7
-        with:
-          node-version: '22'
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Install build dependencies
-        run: npm install --no-audit --no-fund
-      - name: Install Python quality and test tools
-        run: python -m pip install --disable-pip-version-check pytest ruff pyflakes
-      - name: Check JavaScript syntax
-        run: |
-          find assets src tools -type f \( -name '*.js' -o -name '*.mjs' \) -print0 \
-            | xargs -0 -n1 node --check
-      - name: Ruff / Pyflakes gate
-        run: |
-          ruff check .
-          find . -type f -name '*.py' \
-            -not -path './.git/*' \
-            -not -path './node_modules/*' \
-            -not -path './dist/*' \
-            -not -path './offline/*' \
-            -print0 | xargs -0 pyflakes
-      - name: Validate Compose files
-        run: |
-          docker compose -f docker-compose.yml config > /tmp/password-lab-local.yml
-          docker compose -f docker-compose.qnap.yml config > /tmp/password-lab-qnap.yml
-          grep -q '127.0.0.1' /tmp/password-lab-qnap.yml
-          grep -q '18081' /tmp/password-lab-qnap.yml
-      - name: Build local web bundle
-        env:
-          FEATURED_PROJECTS_REQUIRE_LIVE: '1'
-          GITHUB_TOKEN: ${{ github.token }}
-        run: BUILD_SHA="${GITHUB_SHA::12}" BUILD_DATE="$(date -u +%FT%TZ)" BUILD_VERSION="${{ steps.version.outputs.version }}" npm run build:web
-      - name: Run all pytest tests
-        run: pytest -q
-      - name: Build offline edition
-        env:
-          FEATURED_PROJECTS_REQUIRE_LIVE: '1'
-          GITHUB_TOKEN: ${{ github.token }}
-        run: BUILD_VERSION="${{ steps.version.outputs.version }}" npm run build:offline
-      - name: Build release candidate image
-        run: docker build --build-arg BUILD_SHA="${GITHUB_SHA::12}" --build-arg BUILD_DATE="$(date -u +%FT%TZ)" --build-arg BUILD_VERSION="${{ steps.version.outputs.version }}" -t password-lab:release-candidate .
-      - name: Start release candidate image
-        run: docker run -d --rm --name password-lab-release -p 18080:8080 --read-only --tmpfs /tmp:size=16m --tmpfs /var/cache/nginx:size=16m --cap-drop ALL --security-opt no-new-privileges password-lab:release-candidate
-      - name: Verify health endpoint
-        run: |
-          for i in {1..20}; do
-            if curl -fsS http://127.0.0.1:18080/health | grep -q '"healthy":true'; then exit 0; fi
-            sleep 1
-          done
-          docker logs password-lab-release
-          exit 1
-      - name: Install browser-test dependencies
-        run: |
-          python -m pip install playwright
-          python -m playwright install --with-deps chromium
-      - name: Run browser smoke tests against Docker
-        env:
-          PASSWORD_LAB_BASE_URL: http://127.0.0.1:18080
-        run: |
-          python3 tests/browser_smoke.py
-          python3 tests/about_smoke.py
-      - name: Stop release candidate image
-        if: always()
-        run: docker rm -f password-lab-release || true
+
+  validate:
+    name: Full reusable CI validation
+    needs: verify
+    uses: ./.github/workflows/ci.yml
 
   publish:
-    needs: validate
+    name: Publish multiarchitecture Docker Hub image
+    needs: [verify, validate]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
-        with:
-          node-version: '22'
-      - name: Refresh featured project snapshot
-        env:
-          FEATURED_PROJECTS_REQUIRE_LIVE: '1'
-          GITHUB_TOKEN: ${{ github.token }}
-        run: node tools/sync-featured-projects.mjs
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v4
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4
       - name: Log in to Docker Hub
-        uses: docker/login-action@v4
+        uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: Capture build date
-        id: build_date
+      - id: build_date
         run: echo "value=$(date -u +%FT%TZ)" >> "$GITHUB_OUTPUT"
-      - name: Extract Docker metadata
+      - name: Extract Docker metadata and protected rolling tags
         id: meta
-        uses: docker/metadata-action@v6
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6
         with:
           images: dwightmulcahy/password-lab
-          flavor: |
-            latest=false
+          flavor: latest=false
           tags: |
-            type=semver,pattern={{major}},value=${{ needs.validate.outputs.version }}
-            type=semver,pattern={{major}}.{{minor}},value=${{ needs.validate.outputs.version }}
-            type=semver,pattern={{version}},value=${{ needs.validate.outputs.version }}
-            type=raw,value=latest
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}},enable=${{ needs.verify.outputs.is_latest == 'true' }}
+            type=semver,pattern={{major}},enable=${{ needs.verify.outputs.is_latest == 'true' }}
+            type=raw,value=latest,enable=${{ needs.verify.outputs.is_latest == 'true' }}
           labels: |
             org.opencontainers.image.title=Password Strength Lab
             org.opencontainers.image.description=Browser-based password strength and attack-scenario estimator
             org.opencontainers.image.source=https://github.com/dwightmulcahy/password-lab
             org.opencontainers.image.revision=${{ github.sha }}
-            org.opencontainers.image.version=${{ needs.validate.outputs.version }}
-      - name: Build and push multi-architecture image
-        uses: docker/build-push-action@v7
+            org.opencontainers.image.version=${{ needs.verify.outputs.version }}
+      - name: Build and push multiarchitecture image
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7
         with:
           context: .
           push: true
@@ -156,57 +92,80 @@ jobs:
           build-args: |
             BUILD_SHA=${{ github.sha }}
             BUILD_DATE=${{ steps.build_date.outputs.value }}
-            BUILD_VERSION=${{ needs.validate.outputs.version }}
+            BUILD_VERSION=${{ needs.verify.outputs.version }}
+          provenance: mode=max
+          sbom: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  github-release:
-    needs: [validate, publish]
+  offline:
+    name: Offline ZIP and SHA256
+    needs: [verify, validate]
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
-          fetch-depth: 0
-      - uses: actions/setup-node@v7
-        with:
-          node-version: '22'
-      - name: Install build dependencies
-        run: npm install --no-audit --no-fund
-      - name: Build offline release asset
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Build offline ZIP and SHA256
         env:
           FEATURED_PROJECTS_REQUIRE_LIVE: '1'
           GITHUB_TOKEN: ${{ github.token }}
         run: |
-          version="${{ needs.validate.outputs.version }}"
+          version="${{ needs.verify.outputs.version }}"
           BUILD_SHA="${GITHUB_SHA::12}" BUILD_DATE="$(date -u +%FT%TZ)" BUILD_VERSION="$version" npm run build:offline
-          cd offline
-          zip -qr "../password-lab-${version}-offline.zip" .
-          cd ..
+          (cd offline && zip -qr "../password-lab-${version}-offline.zip" .)
           sha256sum "password-lab-${version}-offline.zip" > "password-lab-${version}-offline.zip.sha256"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: release-assets
+          path: |
+            password-lab-*-offline.zip
+            password-lab-*-offline.zip.sha256
+          retention-days: 7
+
+  github-release:
+    name: GitHub Release with grouped Conventional Commits
+    needs: [verify, validate, publish, offline]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          name: release-assets
+          path: .
       - name: Generate grouped conventional-commit release notes
-        env:
-          GITHUB_REPOSITORY: ${{ github.repository }}
         run: node tools/release-notes.mjs "$GITHUB_REF_NAME" release-notes.md
-      - name: Publish GitHub release
+      - name: Create or update GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
-          RELEASE_VERSION: ${{ needs.validate.outputs.version }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_VERSION: ${{ needs.verify.outputs.version }}
+          IS_LATEST: ${{ needs.verify.outputs.is_latest }}
         run: |
+          set -euo pipefail
           asset="password-lab-${RELEASE_VERSION}-offline.zip"
           checksum="${asset}.sha256"
           title="Password Strength Lab ${RELEASE_VERSION}"
-          if gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            gh release edit "$GITHUB_REF_NAME" \
-              --title "$title" \
-              --notes-file release-notes.md \
-              --repo "$GITHUB_REPOSITORY"
-            gh release upload "$GITHUB_REF_NAME" "$asset" "$checksum" --clobber --repo "$GITHUB_REPOSITORY"
+          if [[ "$IS_LATEST" == 'true' ]]; then
+            flags=(--latest)
+          else
+            flags=(--latest=false)
+          fi
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release edit "$GITHUB_REF_NAME" --title "$title" --notes-file release-notes.md "${flags[@]}"
+            gh release upload "$GITHUB_REF_NAME" "$asset" "$checksum" --clobber
           else
             gh release create "$GITHUB_REF_NAME" "$asset" "$checksum" \
-              --verify-tag \
-              --notes-file release-notes.md \
-              --title "$title" \
-              --repo "$GITHUB_REPOSITORY"
+              --verify-tag --notes-file release-notes.md --title "$title" "${flags[@]}"
           fi
+          cat release-notes.md >> "$GITHUB_STEP_SUMMARY"
