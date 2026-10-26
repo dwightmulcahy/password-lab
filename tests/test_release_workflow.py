@@ -38,7 +38,7 @@ def test_release_publishes_expected_dockerhub_semver_tags_and_protects_latest():
 def test_release_builds_multi_architecture_image():
     for action in ("setup-qemu-action", "setup-buildx-action", "build-push-action"):
         matches = re.findall(
-            rf"(?m)^[ ]*uses:[ ]+docker/{re.escape(action)}@([0-9a-f]{{40}})[ ]+# v[0-9]+[ ]*$",
+            rf"(?m)^[ ]*(?:-[ ]+)?uses:[ ]+docker/{re.escape(action)}@([0-9a-f]{{40}})[ ]+# v[0-9]+[ ]*$",
             WORKFLOW,
         )
         assert len(matches) == 1, f"Expected SHA-pinned docker/{action}"
