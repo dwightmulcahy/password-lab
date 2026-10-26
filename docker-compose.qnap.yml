@@ -15,6 +15,9 @@ services:
         BUILD_VERSION: ${BUILD_VERSION:-dev}
         PUBLIC_SITE_URL: ${PUBLIC_SITE_URL:-https://passwordlab.dwights.dev}
     container_name: password-lab
+    init: true
+    stop_signal: SIGTERM
+    stop_grace_period: 20s
     restart: unless-stopped
     ports:
       - "127.0.0.1:${PASSWORD_LAB_HOST_PORT:-18081}:8080"
@@ -31,6 +34,11 @@ services:
     pids_limit: 64
     mem_limit: 128m
     cpus: 0.50
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/health | grep -q '\"healthy\":true'"]
       interval: 30s

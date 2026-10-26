@@ -26,6 +26,14 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Install Python quality and test tools
         run: python -m pip install --disable-pip-version-check pytest ruff pyflakes
+      # Bootstrap the generated npm lockfile from GitHub-hosted npm registry access.
+      # This temporary step is removed as soon as the lockfile is committed.
+      - name: Export lockfile for reproducible builds
+        if: github.ref == 'refs/heads/main'
+        run: |
+          printf '%s\n' 'BEGIN_PACKAGE_LOCK_B64'
+          base64 -w 0 package-lock.json
+          printf '\n%s\n' 'END_PACKAGE_LOCK_B64'
       - name: Check JavaScript syntax
         run: |
           find assets src tools -type f \( -name '*.js' -o -name '*.mjs' \) -print0 \

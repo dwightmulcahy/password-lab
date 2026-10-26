@@ -1,11 +1,39 @@
-.DS_Store
-*.log
+# Secrets and local overrides
 .env
 .env.*
 !.env.example
+*.pem
+*.key
+
+# Node and generated assets
 node_modules/
 dist/
 coverage/
+npm-debug.log*
+offline/*
+!offline/README.md
+*.zip
+*.sha256
 
+# Python caches and virtual environments
 __pycache__/
+*.py[cod]
 .pytest_cache/
+.venv/
+venv/
+.coverage
+htmlcov/
+
+# Browser test outputs
+playwright-report/
+test-results/
+blob-report/
+
+# Editors, OS, and logs
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.log
+logs/

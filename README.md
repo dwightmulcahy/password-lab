@@ -4,6 +4,8 @@
 
 # Password Strength Lab
 
+[![CI](https://github.com/dwightmulcahy/password-lab/actions/workflows/ci.yml/badge.svg)](https://github.com/dwightmulcahy/password-lab/actions/workflows/ci.yml) [![Release](https://github.com/dwightmulcahy/password-lab/actions/workflows/publish-docker.yml/badge.svg)](https://github.com/dwightmulcahy/password-lab/actions/workflows/publish-docker.yml) [![GitHub release](https://img.shields.io/github/v/release/dwightmulcahy/password-lab?sort=semver)](https://github.com/dwightmulcahy/password-lab/releases) [![Dependabot](https://img.shields.io/badge/Dependabot-enabled-025e8c?logo=dependabot)](.github/dependabot.yml)
+
 A browser-based password-strength and attack-scenario estimator built around zxcvbn-ts.
 
 ## Features
@@ -150,3 +152,16 @@ See `SECURITY.md`. Do not include real passwords or credentials in issues, scree
 ## License
 
 Password Strength Lab is open-source software released under the MIT License. See `LICENSE` for the full terms.
+
+## Deployment and release maintenance
+
+The QNAP Compose service binds only to `127.0.0.1:18081` for Hotpot/Cloudflare.
+Its read-only container, CPU/PID/memory limits, health checks, and rotating
+10 MB × 3 JSON log files are intentional security measures.
+Copy `.env.example` to `.env` to override deployment settings.
+
+GitHub CI runs quality checks, functional tests, Docker and browser tests, and
+image vulnerability scanning. Release tags are **created manually**. A stable
+`vM.m.p` tag publishes a multiarchitecture Docker Hub image and an offline ZIP
+with SHA-256 checksum and Conventional Commit release notes. Older stable
+releases must not overwrite the major, major.minor, or latest aliases.
