@@ -14,6 +14,10 @@ COPY . .
 RUN npm run build:web
 
 FROM nginxinc/nginx-unprivileged:alpine@sha256:378d0c32f6562f7fd9629170797f57d2b953aa09be983b3daaf4809bb039ca00
+# Apply Alpine security fixes not yet included in the pinned base image.
+# Upstream digest remains immutable; Trivy enforces a clean final runtime.
+USER root
+RUN apk upgrade --no-cache
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build --chown=101:101 /app/dist /usr/share/nginx/html
 USER 101:101
