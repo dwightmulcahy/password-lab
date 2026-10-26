@@ -7,7 +7,7 @@ ROOT = Path(__file__).resolve().parents[1]
 def test_external_actions_are_pinned_to_immutable_commit_shas():
     for path in (ROOT / ".github" / "workflows").glob("*.yml"):
         workflow = path.read_text(encoding="utf-8")
-        for reference in re.findall(r"uses:\\s+([^\\s#]+)", workflow):
+        for reference in re.findall(r"uses:\s+([^\s#]+)", workflow):
             if reference.startswith("./"):
                 continue
             assert re.fullmatch(r"[^@]+@[0-9a-f]{40}", reference), (
@@ -17,7 +17,7 @@ def test_external_actions_are_pinned_to_immutable_commit_shas():
 
 def test_base_images_are_versioned_and_digest_pinned():
     dockerfile = (ROOT / "Dockerfile").read_text(encoding="utf-8")
-    images = re.findall(r"^FROM\\s+(\\S+)", dockerfile, re.MULTILINE)
+    images = re.findall(r"^FROM\s+(\S+)", dockerfile, re.MULTILINE)
     assert len(images) == 2
     for image in images:
         assert re.fullmatch(r"[^:]+:[^@]+@sha256:[0-9a-f]{64}", image)
