@@ -49,7 +49,7 @@ def test_release_builds_multi_architecture_image():
 
 
 def test_github_release_uses_grouped_conventional_notes():
-    assert "python3 scripts/standard_release_notes.py" in WORKFLOW
+    assert "dwightmulcahy/repo-template/.github/actions/release-notes@" in WORKFLOW
     assert "release-notes.md" in WORKFLOW
     assert "--notes-file release-notes.md" in WORKFLOW
     assert "--generate-notes" not in WORKFLOW
