@@ -7,12 +7,15 @@ DEPENDABOT = Path(".github/dependabot.yml").read_text(encoding="utf-8")
 def test_ci_uses_ruff_and_pyflakes():
     assert "ruff check . --select F" in CI
     assert "xargs -0 pyflakes" in CI
-    assert "JS syntax + Ruff/Pyflakes" in CI
+    assert "name: JavaScript syntax" in CI
+    assert "name: Shared Ruff / Pyflakes" in CI
+    assert "reusable-python-ci.yml@" in CI
+    assert "needs: [lint, python-lint, compose, build, test]" in CI
 
 
 def test_ci_runs_all_test_suites_as_gates():
     assert "workflow_call:" in CI
-    for job in ("lint:", "compose:", "build:", "test:", "docker-smoke:"):
+    for job in ("lint:", "python-lint:", "compose:", "build:", "test:", "docker-smoke:"):
         assert job in CI
     assert "pytest -q" in CI
     assert "python3 tests/browser_smoke.py" in CI
