@@ -25,7 +25,8 @@ def test_release_runs_quality_and_all_tests_through_ci():
 def test_release_publishes_expected_dockerhub_semver_tags_and_protects_latest():
     assert "dwightmulcahy/password-lab" in WORKFLOW
     assert "dwightmulcahy/repo-template/.github/workflows/reusable-docker-publish.yml@" in WORKFLOW
-    assert "is_latest: ${{ needs.verify.outputs.is_latest == 'true' }}" in WORKFLOW
+    for alias, output in (("publish_major", "publish_major"), ("publish_minor", "publish_minor"), ("publish_latest", "is_latest")):
+        assert f"{alias}: ${{{{ needs.verify.outputs.{output} == 'true' }}}}" in WORKFLOW
     assert "secrets.DOCKERHUB_USERNAME" in WORKFLOW
     assert "secrets.DOCKERHUB_TOKEN" in WORKFLOW
 
