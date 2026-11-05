@@ -66,7 +66,7 @@ jobs:
   publish:
     name: Publish multiarchitecture Docker Hub image
     needs: [verify, validate]
-    uses: dwightmulcahy/repo-template/.github/workflows/reusable-docker-publish.yml@0ecc636387ef04b46acf232b3a9ef49cc2980eca
+    uses: dwightmulcahy/repo-template/.github/workflows/reusable-docker-publish.yml@15c05e1fc09a7c0ef835b773f1ae43871d902879
     with:
       image: dwightmulcahy/password-lab
       tag: ${{ github.ref_name }}
@@ -126,7 +126,7 @@ jobs:
           name: release-assets
           path: .
       - name: Generate conventional release notes
-        uses: dwightmulcahy/repo-template/.github/actions/release-notes@f3dc1af2146156866574485a20ded5ac35d08a88
+        uses: dwightmulcahy/repo-template/.github/actions/release-notes@15c05e1fc09a7c0ef835b773f1ae43871d902879
         with:
           tag: ${{ github.ref_name }}
           project-name: "Password Strength Lab"
