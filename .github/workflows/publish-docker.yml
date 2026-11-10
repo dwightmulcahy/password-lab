@@ -5,8 +5,6 @@ on:
 
 permissions:
   contents: read
-  id-token: write
-  attestations: write
 concurrency:
   group: release-${{ github.ref }}
   cancel-in-progress: false
@@ -66,6 +64,10 @@ jobs:
   publish:
     name: Publish multiarchitecture Docker Hub image
     needs: [verify, validate]
+    permissions:
+      contents: read
+      id-token: write      # provenance attestation (only this job needs it)
+      attestations: write
     uses: dwightmulcahy/repo-template/.github/workflows/reusable-docker-publish.yml@cf8e0cc9cf440098778de4684e3df2e3de2a305e
     with:
       image: dwightmulcahy/password-lab
@@ -90,7 +92,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
-      - run: npm ci --no-audit --no-fund
+      - run: npm ci --no-audit --no-fund --ignore-scripts   # esbuild ships its binary via optionalDependencies
       - name: Build offline ZIP and SHA256
         env:
           FEATURED_PROJECTS_REQUIRE_LIVE: '1'
