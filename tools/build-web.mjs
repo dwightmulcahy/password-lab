@@ -22,7 +22,7 @@ const buildDate = process.env.BUILD_DATE && process.env.BUILD_DATE !== 'unknown'
   ? process.env.BUILD_DATE
   : new Date().toISOString();
 const buildVersion = process.env.BUILD_VERSION || 'dev';
-const publicSiteUrl = (process.env.PUBLIC_SITE_URL || 'https://passwordlab.dwights.dev').replace(/\/$/, '');
+const publicSiteUrl = (process.env.PUBLIC_SITE_URL || 'https://password-lab.dwights.dev').replace(/\/$/, '');
 const canonicalUrl = `${publicSiteUrl}/`;
 
 await rm('dist', { recursive: true, force: true });

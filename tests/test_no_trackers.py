@@ -16,7 +16,7 @@ ALLOWED_REMOTE_HOSTS = {
     'api.pwnedpasswords.com',
     # Canonical/Open Graph metadata names the production site but does not add
     # a third-party runtime dependency.
-    'passwordlab.dwights.dev',
+    'password-lab.dwights.dev',
 }
 
 # Ordinary <a href> links do not make network requests unless a visitor clicks

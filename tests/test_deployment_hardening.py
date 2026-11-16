@@ -40,6 +40,6 @@ def test_build_metadata_is_generated():
 
 
 def test_qnap_build_uses_production_site_url_and_version():
-    assert 'PUBLIC_SITE_URL: ${PUBLIC_SITE_URL:-https://passwordlab.dwights.dev}' in QNAP_COMPOSE
+    assert 'PUBLIC_SITE_URL: ${PUBLIC_SITE_URL:-https://password-lab.dwights.dev}' in QNAP_COMPOSE
     assert 'BUILD_VERSION: ${BUILD_VERSION:-dev}' in QNAP_COMPOSE
-    assert 'https://passwordlab.dwights.dev/' in QNAP_COMPOSE
+    assert 'https://password-lab.dwights.dev/' in QNAP_COMPOSE
