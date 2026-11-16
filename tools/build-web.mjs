@@ -46,7 +46,7 @@ html = html
   .replace('<html lang="en">', '<html lang="en" translate="no" class="notranslate">')
   .replace('<meta charset="utf-8" />', '<meta charset="utf-8" />\n  <meta name="google" content="notranslate">')
   .replace('assets/zxcvbn-loader.js', 'assets/zxcvbn-bundle.js')
-  .replace('type="module" src="assets/zxcvbn-bundle.js"', 'src="assets/zxcvbn-bundle.js"')
+  .replace('type="module" src="assets/zxcvbn-bundle.js"', 'src="assets/zxcvbn-bundle.js" defer') // 4.7 MB: never render-blocking; runs before the body's defer scripts
   .replace("script-src 'self' https://esm.sh", "script-src 'self'")
   .replace("connect-src 'self' https://registry.npmjs.org https://api.pwnedpasswords.com https://esm.sh", "connect-src 'self' https://api.pwnedpasswords.com")
   // frame-ancestors is ignored in a meta CSP. nginx sends it as a response header.
@@ -71,6 +71,9 @@ const robots = `User-agent: *\nAllow: /\n\nSitemap: ${canonicalUrl}sitemap.xml\n
 const sitemap = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url>\n    <loc>${canonicalUrl}</loc>\n  </url>\n</urlset>\n`;
 
 await writeFile('dist/index.html', html);
+const securityTxt = `Contact: https://github.com/dwightmulcahy/password-lab/security/advisories/new\nExpires: ${new Date(Date.parse(buildDate) + 365 * 864e5).toISOString()}\nPreferred-Languages: en\nCanonical: ${canonicalUrl}.well-known/security.txt\nPolicy: https://github.com/dwightmulcahy/password-lab/blob/main/SECURITY.md\n`;
+await mkdir('dist/.well-known', { recursive: true });
+await writeFile('dist/.well-known/security.txt', securityTxt);
 await writeFile('dist/robots.txt', robots);
 await writeFile('dist/sitemap.xml', sitemap);
 await writeFile('dist/build-info.json', `${JSON.stringify({ build_sha: buildSha, build_date: buildDate, version: buildVersion, site_url: publicSiteUrl })}\n`);
