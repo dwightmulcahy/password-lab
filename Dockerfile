@@ -4,10 +4,13 @@ ARG BUILD_SHA=local
 ARG BUILD_DATE=unknown
 ARG BUILD_VERSION=dev
 ARG PUBLIC_SITE_URL=https://password-lab.dwights.dev
+# release notes for the "What's new" dialog (base64 JSON from scripts/build_changelog.py)
+ARG CHANGELOG_B64=
 ENV BUILD_SHA=${BUILD_SHA} \
     BUILD_DATE=${BUILD_DATE} \
     BUILD_VERSION=${BUILD_VERSION} \
-    PUBLIC_SITE_URL=${PUBLIC_SITE_URL}
+    PUBLIC_SITE_URL=${PUBLIC_SITE_URL} \
+    CHANGELOG_B64=${CHANGELOG_B64}
 COPY package.json package-lock.json ./
 RUN npm ci --no-audit --no-fund
 COPY . .
