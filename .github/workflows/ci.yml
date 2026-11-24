@@ -148,6 +148,7 @@ jobs:
         run: |
           python3 tests/browser_smoke.py
           python3 tests/about_smoke.py
+          python3 tests/whats_new_smoke.py
       - name: Docker logs on failure
         if: failure()
         run: docker logs password-lab-ci || true
