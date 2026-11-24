@@ -8,6 +8,7 @@ import { injectPrivacyEnhancements } from './build-web-privacy.mjs';
 import { injectSeo } from './build-web-seo.mjs';
 import { injectBrand } from './build-web-brand.mjs';
 import { injectSemanticColors } from './build-web-semantic-colors.mjs';
+import { changelogJson, injectWhatsNew } from './build-web-whats-new.mjs';
 
 function localGitSha() {
   try {
@@ -62,6 +63,7 @@ html = injectAbout(html);
 html = injectPrivacyEnhancements(html);
 html = injectLayoutEnhancements(html);
 html = injectSemanticColors(html);
+html = injectWhatsNew(html);
 
 if (!html.includes('id="buildMeta"')) {
   html = html.replace('</footer>', `  <div id="buildMeta" class="build-meta">Build <code>${buildSha}</code> • ${buildDate}</div>\n  </footer>`);
@@ -76,5 +78,6 @@ await mkdir('dist/.well-known', { recursive: true });
 await writeFile('dist/.well-known/security.txt', securityTxt);
 await writeFile('dist/robots.txt', robots);
 await writeFile('dist/sitemap.xml', sitemap);
+await writeFile('dist/changelog.json', changelogJson(process.env, buildVersion));
 await writeFile('dist/build-info.json', `${JSON.stringify({ build_sha: buildSha, build_date: buildDate, version: buildVersion, site_url: publicSiteUrl })}\n`);
 console.log(`Web build written to dist/ (version ${buildVersion}, build ${buildSha}, site ${publicSiteUrl})`);
